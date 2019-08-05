@@ -24,11 +24,18 @@ include_directories(${CMAKE_SOURCE_DIR}/)
 include_directories(${CMAKE_SOURCE_DIR}/fun_test)
 include_directories(${CMAKE_SOURCE_DIR}/bmp2jpeg)
 include_directories(${CMAKE_SOURCE_DIR}/video_capture)
-include_directories(${CMAKE_SOURCE_DIR}/webrtc/include/)
-LINK_DIRECTORIES(${CMAKE_SOURCE_DIR}/webrtc/lib/x64/Release)
+include_directories(${CMAKE_SOURCE_DIR}/endecoder)
+
+include_directories(${CMAKE_SOURCE_DIR}/../webrtc/include/)
+LINK_DIRECTORIES(${CMAKE_SOURCE_DIR}/../webrtc/lib/x64/Release)
+
+include_directories(/usr/local/include)
+LINK_DIRECTORIES(/usr/local/lib)
+
+add_subdirectory(endecoder)
 
 set(zsy_LIB
-fun_test/yuv2jpeg.cc
+fun_test/yuvrecord.cc
 )
 add_library(zsy STATIC ${zsy_LIB})
 
@@ -46,7 +53,7 @@ add_library(bmp2jp STATIC ${bmp2jp_LIB})
 
 set(EXECUTABLE_NAME "video_capture")
 add_executable(${EXECUTABLE_NAME} main.cc)
-target_link_libraries(${EXECUTABLE_NAME}  zsy webrtc_full pthread)
+target_link_libraries(${EXECUTABLE_NAME}   h264endecoder zsy webrtc_full  x264 avcodec avutil swscale pthread dl m)
 set(EXECUTABLE_NAME "fun_test")
 add_executable(${EXECUTABLE_NAME} fun_test.cc )
 target_link_libraries(${EXECUTABLE_NAME}  zsy webrtc_full pthread)
@@ -58,3 +65,11 @@ set(EXECUTABLE_NAME "bmp2jpeg")
 add_executable(${EXECUTABLE_NAME} bmp2jpeg/bmp2jpeg.cc )
 target_link_libraries(${EXECUTABLE_NAME} bmp2jp )
 
+set(EXECUTABLE_NAME "t_ffmpeg")
+add_executable(${EXECUTABLE_NAME} ${CMAKE_SOURCE_DIR}/endecoder/ffmpeg_test.cc)
+target_link_libraries(${EXECUTABLE_NAME} h264endecoder  x264 avcodec avutil swscale pthread dl m)
+# h264endecoder  x264 the link order matters.
+#su
+#echo "/usr/local/lib" >> /etc/ld.so.conf
+#ldconfig
+#

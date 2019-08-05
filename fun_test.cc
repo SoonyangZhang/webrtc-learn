@@ -1,4 +1,4 @@
-#include "yuv2jpeg.h"
+#include "yuvrecord.h"
 #include <iostream>
 #include <signal.h>
 using namespace zsy;
@@ -12,7 +12,7 @@ int main()
 	signal(SIGTERM, signal_exit_handler);
     signal(SIGINT, signal_exit_handler);
     signal(SIGTSTP, signal_exit_handler);
-    FrameToJpeg frame(15);
+    FrameToFile frame(15);
     frame.StartThread();
     while(m_running){
 

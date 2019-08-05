@@ -46,7 +46,7 @@ public:
 	    {
 	    	record_ms=now_ms-last_time_;
 	    }
-	    std::cout<<frame_num_<<" "<<record_ms<<" "<<size<<" "<<height<<" "<<width<<std::endl;
+	    //std::cout<<frame_num_<<" "<<record_ms<<" "<<size<<" "<<height<<" "<<width<<std::endl;
 	    last_time_=now_ms;
 	    frame_num_++;
         for(auto it=sinks_.begin();it!=sinks_.end();it++){

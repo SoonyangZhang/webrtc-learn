@@ -11,7 +11,8 @@
 #include <iostream>
 #include <signal.h>
 #include "video_capture.h"
-#include "yuv2jpeg.h"
+#include "yuvrecord.h"
+#include "videocodec.h"
 using namespace webrtc;
 using namespace std;
 using namespace zsy;
@@ -37,9 +38,12 @@ int main()
     capability.width = kTestWidth;
     capability.height = kTestHeight;
    	capability.maxFPS = kTestFramerate;
-   	FrameToJpeg sink(2);
+   	FrameToFile sink(2);
+        VideoEncoder encoder(kTestWidth,kTestHeight,kTestFramerate);
    	video_capture_.AddSink(&sink);
+	video_capture_.AddSink(&encoder);
 	video_capture_.StartCapture(capability);
+	encoder.StartEncoder();
 	sink.StartThread();
 	while(m_running)
 	{
@@ -47,6 +51,7 @@ int main()
 	}
 	printf("stop capture\n");
 	video_capture_.StopCapture();
+	encoder.StopEncoder();
 	sink.StopThread();
 	return 0;
 }

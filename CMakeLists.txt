@@ -15,24 +15,34 @@ set(CMAKE_C_FLAGS "-fPIC")
 add_definitions(-D__STDC_FORMAT_MACROS)
 # to handle undefined reference to `rtc::Thread::Clear(rtc::MessageHandler*, unsigned int, std::__cxx11::list
 add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
+add_definitions(-Dlinux_plat)
 #add_definitions(-DNDEBUG)
 #add_definitions(-std=c++11  )#-fno-rtti
 #set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include_directories(${CMAKE_SOURCE_DIR}/)
 include_directories(${CMAKE_SOURCE_DIR}/fun_test)
+include_directories(${CMAKE_SOURCE_DIR}/bmp2jpeg)
 include_directories(${CMAKE_SOURCE_DIR}/webrtc/include/)
 LINK_DIRECTORIES(${CMAKE_SOURCE_DIR}/webrtc/lib/x64/Release)
 
 set(zsy_LIB
 fun_test/yuv2jpeg.cc
 )
-
 add_library(zsy STATIC ${zsy_LIB})
-set(SY_LIB
-SYYuvToRgb.cc
+
+set(bmp2jp_LIB
+bmp2jpeg/bmp.cc
+bmp2jpeg/dct.cc
+bmp2jpeg/encode.cc
+bmp2jpeg/huffencode.cc
+bmp2jpeg/io.cc
+bmp2jpeg/jpeg.cc
 )
-add_library(SY STATIC ${SY_LIB})
+add_library(bmp2jp STATIC ${bmp2jp_LIB})
+
+
+
 set(EXECUTABLE_NAME "video_capture")
 add_executable(${EXECUTABLE_NAME} main.cc)
 target_link_libraries(${EXECUTABLE_NAME}  zsy webrtc_full pthread)
@@ -40,13 +50,10 @@ set(EXECUTABLE_NAME "fun_test")
 add_executable(${EXECUTABLE_NAME} fun_test.cc )
 target_link_libraries(${EXECUTABLE_NAME}  zsy webrtc_full pthread)
 
-set(EXECUTABLE_NAME "yuv2rgb")
-include_directories(${CMAKE_SOURCE_DIR}/jpeg-6b/)
-LINK_DIRECTORIES(${CMAKE_SOURCE_DIR}/jpeg-6b/.libs/)
-add_executable(${EXECUTABLE_NAME} yuv2rgb.cc )
-target_link_libraries(${EXECUTABLE_NAME} SY jpeg)
-
-
 set(EXECUTABLE_NAME "yuv2bmp")
 add_executable(${EXECUTABLE_NAME} yuv2bmp.cc )
+
+set(EXECUTABLE_NAME "bmp2jpeg")
+add_executable(${EXECUTABLE_NAME} bmp2jpeg/bmp2jpeg.cc )
+target_link_libraries(${EXECUTABLE_NAME} bmp2jp )
 

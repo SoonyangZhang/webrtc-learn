@@ -18,7 +18,7 @@ void InitHuffmanTable();
 void RGBToYCrCb(int *width, int *height);
 
 /*将头文件信息以及量化表、Huffman表等信息写如JPEG文件中*/
-void writeHeaderTableInfo();
+void writeHeaderTableInfo(OutputStream *ops,DWORD height,DWORD width);
 
 /*控制解析整个BMP文件*/
 bool EncodeWholeFile(char *destName, char *srcName);

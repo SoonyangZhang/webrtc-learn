@@ -62,9 +62,9 @@ void writeDHT(OutputStream *ops, DWORD param1, DWORD param2)
 }
 
 /*将Huffman表写入JPEG文件*/
-void writeHuffmanTable(OutputStream *ops, MainInfo *mi)
+void writeHuffmanTable(OutputStream *ops, DWORD height,DWORD width)
 {
-	writeSOF0(ops,mi->height, mi->width);
+	writeSOF0(ops,height, width);
 
 	writeDHT(ops, sizeof(huffmanLumDCBit)-1+sizeof(huffmanLumDCVal), 0x00);
 	WriteDirect(ops, huffmanLumDCBit+1, sizeof(huffmanLumDCBit)-1);

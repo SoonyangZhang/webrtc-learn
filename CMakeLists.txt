@@ -23,6 +23,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include_directories(${CMAKE_SOURCE_DIR}/)
 include_directories(${CMAKE_SOURCE_DIR}/fun_test)
 include_directories(${CMAKE_SOURCE_DIR}/bmp2jpeg)
+include_directories(${CMAKE_SOURCE_DIR}/video_capture)
 include_directories(${CMAKE_SOURCE_DIR}/webrtc/include/)
 LINK_DIRECTORIES(${CMAKE_SOURCE_DIR}/webrtc/lib/x64/Release)
 

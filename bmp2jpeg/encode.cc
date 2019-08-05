@@ -50,8 +50,9 @@ bool EncodeWholeFile(char *jpeg, char *bmp)
 	printf("成功实现颜色模型转化\n");
 
 	//将头文件信息以及量化表、Huffman表等信息写如JPEG文件中
-	writeHeaderTableInfo();
-
+	writeHeaderTableInfo(&ops,mi.height,mi.width);
+    printf("%s %d %d\n",__FUNCTION__,mi.height,mi.width);
+    printf("%s %d %d\n",__FUNCTION__,width,height);
 	//一次编码16x16块,使色度二次取样后成为8x8块
 	int preY = 0;
 	int	preCb = 0;
@@ -116,7 +117,6 @@ void InitHuffmanTable()
 void RGBToYCrCb(int *width, int *height)
 {
 	//读取BMP图像每个像素RGB值，保存在R、G、B中
-	printf("%d,%d\n",*width,*height);
 	GetRGB(R, G, B, (BYTE *)mi.lpvbits, mi.width, mi.height, mi.bpl);
 
 	//将图片的width和height和均变成16的倍数，方便后面16*16块的划分
@@ -127,17 +127,17 @@ void RGBToYCrCb(int *width, int *height)
 }
 
 /*将头文件信息以及量化表、Huffman表等信息写如JPEG文件中*/
-void writeHeaderTableInfo()
+void writeHeaderTableInfo(OutputStream *ops,DWORD height,DWORD width)
 {
 	//将SOI和APP0写入JPEG文件
-	writeSOI(&ops);
-	writeAPP0(&ops);
+	writeSOI(ops);
+	writeAPP0(ops);
 
 	//将亮度和色度的量化表写入JPEG文件
-	writeQuantTable(&ops);
+	writeQuantTable(ops);
 
   	//将Huffman表写入JPEG文件
-	writeHuffmanTable(&ops, &mi);
+	writeHuffmanTable(ops, height,width);
 }
 
 /*对被分成8*8小块后的图像进行编码*/

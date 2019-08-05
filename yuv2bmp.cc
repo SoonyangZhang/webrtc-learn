@@ -66,7 +66,7 @@ int Convert(char *file, int width, int height, int n)
         }
 
     //写到BMP文件中
-    sprintf(BmpFileName, "test.bmp", file, n);
+    sprintf(BmpFileName,"test.bmp");
     WriteBmp(width, height, cTemp[3], cTemp[4], cTemp[5], BmpFileName);
 
     free(yuv);

@@ -40,7 +40,7 @@ void writeAPP0(OutputStream *ops);
 void writeQuantTable(OutputStream *ops);
 
 /*将Huffman表写入JPEG文件*/
-void writeHuffmanTable(OutputStream *ops, MainInfo *mi);
+void writeHuffmanTable(OutputStream *ops, DWORD height,DWORD width);
 
 /*将EOI写入JPEG文件*/
 void writeEOI(OutputStream *ops);

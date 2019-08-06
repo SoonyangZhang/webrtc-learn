@@ -53,6 +53,7 @@ add_library(bmp2jp STATIC ${bmp2jp_LIB})
 
 set(base_LIB
 base/my_thread.cc
+base/base_time.cc
 )
 add_library(base STATIC ${base_LIB})
 
@@ -87,4 +88,4 @@ add_executable(${EXECUTABLE_NAME} ${CMAKE_SOURCE_DIR}/base/thread_test.cc)
 target_link_libraries(${EXECUTABLE_NAME} base pthread)
 set(EXECUTABLE_NAME "t_fake")
 add_executable(${EXECUTABLE_NAME} ${CMAKE_SOURCE_DIR}/fake/fake_test.cc)
-target_link_libraries(${EXECUTABLE_NAME} fake webrtc_full pthread)
+target_link_libraries(${EXECUTABLE_NAME} fake base pthread)

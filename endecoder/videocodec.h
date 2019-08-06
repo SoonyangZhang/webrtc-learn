@@ -61,7 +61,9 @@ private:
 	YUVBuffer yuv_buf_;
 	uint8_t image_buf_[1024000];
         int pic_id_{0};
+	int total_pid_{0};
 	int lock_{0};
 	int que_len_{0};
+        int max_que_{4};
 };
 }

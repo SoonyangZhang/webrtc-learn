@@ -73,7 +73,7 @@ void VideoEncoder::Run(){
 			uint32_t delta2=now-last;
 			uint32_t queue=last-enque_ts;
 			pic_id_++;
-			std::cout<<pic_id_<<" "<<out_size<<" "<<delta<<" "<<delta2<<" "<<
+			std::cout<<total_pid_<<" "<<pic_id_<<" "<<out_size<<" "<<delta<<" "<<delta2<<" "<<
 			queue<<" "<<que_len_<<std::endl;
 			if(sink_){
 				sink_->OnEncodedImageCallBack(image_buf_,out_size,ft,delta);
@@ -83,6 +83,8 @@ void VideoEncoder::Run(){
 	}
 }
 void VideoEncoder::OnFrame(const webrtc::VideoFrame& frame){
+	 total_pid_++;
+	 if(que_len_>max_que_){return ;}
 	 webrtc::VideoFrame *copy=new webrtc::VideoFrame(frame);
 	 uint32_t now=rtc::TimeMillis();
 	 //rtc::CritScope crit(&que_lock_);

@@ -1,9 +1,17 @@
+#pragma once
 #include <stdint.h>
 #include <stdio.h>
 #include <memory>
 #include <list>
-#include "rtc_base/thread.h"
-#include "rtc_base/timeutils.h"
+#include "my_thread.h"
+#include "base_time.h"
+//#include "rtc_base/thread.h"
+//#include "rtc_base/timeutils.h"
+#define atomic_cas(dst, old, new) __sync_bool_compare_and_swap((dst), (old), (new))
+#define atomic_lock(ptr)\
+while(!atomic_cas(ptr,0,1))
+#define atomic_unlock(ptr)\
+while(!atomic_cas(ptr,1,0))
 namespace zsy{
 template <class T>
 class FakeSinkInterface{
@@ -43,7 +51,7 @@ struct FakeFrameTs{
     uint32_t enqueTs{0};
 };
 FakeFrame CreateFakeFrame(int len);
-class FakeVideoSource:public rtc::Thread{
+class FakeVideoSource:public MyThread{
 public:
     FakeVideoSource(int width,int height,int fps);
     ~FakeVideoSource();
@@ -61,7 +69,7 @@ private:
     int64_t last_ts_{-1};
     bool running_{false};
 };
-class FakeVideoEncoder:public FakeSinkInterface<FakeFrame>,public rtc::Thread{
+class FakeVideoEncoder:public FakeSinkInterface<FakeFrame>,public MyThread{
 public:
     FakeVideoEncoder(){}
     ~FakeVideoEncoder();
@@ -70,7 +78,8 @@ public:
     void Run() override;
     void OnIncomeData(const FakeFrame &frame) override;
 private:
-	rtc::CriticalSection que_lock_;
+	//rtc::CriticalSection que_lock_;
+    int lock_{0};
 	std::list<FakeFrameTs*> frames_;
 	bool running_{false};
     int que_len_{0};

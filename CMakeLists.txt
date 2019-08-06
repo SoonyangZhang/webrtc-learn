@@ -23,6 +23,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include_directories(${CMAKE_SOURCE_DIR}/)
 include_directories(${CMAKE_SOURCE_DIR}/base)
 include_directories(${CMAKE_SOURCE_DIR}/fun_test)
+include_directories(${CMAKE_SOURCE_DIR}/fake)
 include_directories(${CMAKE_SOURCE_DIR}/bmp2jpeg)
 include_directories(${CMAKE_SOURCE_DIR}/video_capture)
 include_directories(${CMAKE_SOURCE_DIR}/endecoder)
@@ -55,6 +56,11 @@ base/my_thread.cc
 )
 add_library(base STATIC ${base_LIB})
 
+set(fake_LIB
+fake/fake_video.cc
+)
+add_library(fake STATIC ${fake_LIB})
+
 set(EXECUTABLE_NAME "video_capture")
 add_executable(${EXECUTABLE_NAME} main.cc)
 target_link_libraries(${EXECUTABLE_NAME}   h264endecoder base zsy webrtc_full  x264 avcodec avutil swscale pthread dl m)
@@ -79,4 +85,6 @@ target_link_libraries(${EXECUTABLE_NAME} h264endecoder  x264 avcodec avutil swsc
 set(EXECUTABLE_NAME "t_task")
 add_executable(${EXECUTABLE_NAME} ${CMAKE_SOURCE_DIR}/base/thread_test.cc)
 target_link_libraries(${EXECUTABLE_NAME} base pthread)
-
+set(EXECUTABLE_NAME "t_fake")
+add_executable(${EXECUTABLE_NAME} ${CMAKE_SOURCE_DIR}/fake/fake_test.cc)
+target_link_libraries(${EXECUTABLE_NAME} fake webrtc_full pthread)

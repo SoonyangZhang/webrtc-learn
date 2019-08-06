@@ -21,6 +21,7 @@ add_definitions(-Dlinux_plat)
 #set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include_directories(${CMAKE_SOURCE_DIR}/)
+include_directories(${CMAKE_SOURCE_DIR}/base)
 include_directories(${CMAKE_SOURCE_DIR}/fun_test)
 include_directories(${CMAKE_SOURCE_DIR}/bmp2jpeg)
 include_directories(${CMAKE_SOURCE_DIR}/video_capture)
@@ -49,11 +50,14 @@ bmp2jpeg/jpeg.cc
 )
 add_library(bmp2jp STATIC ${bmp2jp_LIB})
 
-
+set(base_LIB
+base/my_thread.cc
+)
+add_library(base STATIC ${base_LIB})
 
 set(EXECUTABLE_NAME "video_capture")
 add_executable(${EXECUTABLE_NAME} main.cc)
-target_link_libraries(${EXECUTABLE_NAME}   h264endecoder zsy webrtc_full  x264 avcodec avutil swscale pthread dl m)
+target_link_libraries(${EXECUTABLE_NAME}   h264endecoder base zsy webrtc_full  x264 avcodec avutil swscale pthread dl m)
 set(EXECUTABLE_NAME "fun_test")
 add_executable(${EXECUTABLE_NAME} fun_test.cc )
 target_link_libraries(${EXECUTABLE_NAME}  zsy webrtc_full pthread)
@@ -72,4 +76,7 @@ target_link_libraries(${EXECUTABLE_NAME} h264endecoder  x264 avcodec avutil swsc
 #su
 #echo "/usr/local/lib" >> /etc/ld.so.conf
 #ldconfig
-#
+set(EXECUTABLE_NAME "t_task")
+add_executable(${EXECUTABLE_NAME} ${CMAKE_SOURCE_DIR}/base/thread_test.cc)
+target_link_libraries(${EXECUTABLE_NAME} base pthread)
+

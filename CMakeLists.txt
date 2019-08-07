@@ -69,7 +69,7 @@ add_executable(${EXECUTABLE_NAME} main.cc)
 target_link_libraries(${EXECUTABLE_NAME}   h264endecoder base zsy webrtc_full  x264 avcodec avutil swscale pthread dl m)
 set(EXECUTABLE_NAME "fun_test")
 add_executable(${EXECUTABLE_NAME} fun_test.cc )
-target_link_libraries(${EXECUTABLE_NAME}  zsy webrtc_full pthread)
+target_link_libraries(${EXECUTABLE_NAME}  base zsy webrtc_full pthread)
 
 set(EXECUTABLE_NAME "yuv2bmp")
 add_executable(${EXECUTABLE_NAME} yuv2bmp.cc )
@@ -92,3 +92,5 @@ set(EXECUTABLE_NAME "t_fake")
 add_executable(${EXECUTABLE_NAME} ${CMAKE_SOURCE_DIR}/fake/fake_test.cc)
 target_link_libraries(${EXECUTABLE_NAME} fake base pthread)
 
+#https://github.com/SoonyangZhang/base/tree/master/video_tool  
+#ffplay -stats -f h264 1280x720.h264

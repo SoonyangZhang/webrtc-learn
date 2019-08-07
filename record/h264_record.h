@@ -34,6 +34,7 @@ public:
         image_=std::move(r.image_);
         size_=r.size_;
         r.size_=0;
+	ft_=r.ft_;
         capture_ts_=r.capture_ts_;
         encode_ts_=r.encode_ts_;
         return (*this);
@@ -44,6 +45,15 @@ public:
     }
     uint32_t size() const{
         return size_;
+    }
+    uint32_t FrameType()const{
+        return ft_;
+    }
+    uint32_t CaptureTs() const{
+        return capture_ts_;
+    }
+    uint32_t EncodeTs() const{
+        return encode_ts_;
     }
 private:
     std::unique_ptr<uint8_t []> image_;
@@ -63,6 +73,9 @@ private:
 	void WriteImageToDisk();
 	TaskQueue *worker_;
 	std::ofstream f_out_;
+    std::fstream info_;
+    int32_t first_encode_ts_{-1};
+    uint32_t first_capture_ts_{0};
 	AtomicLock que_lock_;
 	std::list<EncodeImage> images_;
 };

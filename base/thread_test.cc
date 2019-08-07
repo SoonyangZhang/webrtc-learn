@@ -11,7 +11,7 @@ public:
     void ToTask() {
 	if(count_>10)
     {return ;}
-    printf("%x,%llx\n",base_clock32(),base_clock64());
+    //printf("%x,%llx\n",base_clock32(),base_clock64());
     std::cout<<count_<<std::endl;
     count_++;
 	worker_->PostDelayedTask([this](){

@@ -41,13 +41,17 @@ static inline void itimeofday(long *sec, long *usec){
 	if (sec) *sec = (long)(qpc / freq) + addsec;
 	if (usec) *usec = (long)((qpc % freq) * 1000000 / freq);
 	#else
-	struct timeval time;
-	gettimeofday(&time, NULL);
-	if (sec) *sec = time.tv_sec;
-	if (usec) *usec = time.tv_usec;
+	//struct timeval time;
+	//gettimeofday(&time, NULL);
+    //if (sec) *sec = time.tv_sec;
+	//if (usec) *usec = time.tv_usec;
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    if (sec) *sec = ts.tv_sec;
+	if (usec) *usec = ts.tv_nsec/1000;
 	#endif
 }
-uint64_t base_clock64(void){
+int64_t base_clock64(void){
 	long s, u;
 	int64_t value;
 	itimeofday(&s, &u);
@@ -56,4 +60,17 @@ uint64_t base_clock64(void){
 }
 uint32_t base_clock32(void){
 	return (uint32_t)(base_clock64()& 0xfffffffful);
+}
+namespace zsy{
+static Clock *glock=nullptr;
+void SetGlobalClock(Clock *clock){
+    glock=clock;
+}
+uint32_t GetMilliSeconds(){
+    if(glock){
+        return glock->Now();
+    }else{
+        return base_clock32();
+    }
+}
 }

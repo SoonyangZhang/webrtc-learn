@@ -35,7 +35,7 @@ void FakeVideoSource::StopCamera(){
 }
 void FakeVideoSource::Run(){
     while(running_){
-        int64_t now=base_clock32();
+        int64_t now=GetMilliSeconds();
         if(now>last_ts_){
             int len=width_*height_*3/2;
             FakeFrame f(len);
@@ -67,8 +67,7 @@ FakeVideoEncoder::~FakeVideoEncoder(){
     if(running_){
         StopEncoder();
     }
-    //rtc::CritScope crit(&que_lock_);
-    lock_.Enter();
+    LockScope ls(&lock_);
     while(!frames_.empty()){
         FakeFrame *f=nullptr;
         FakeFrameTs *temp=frames_.front();
@@ -77,7 +76,6 @@ FakeVideoEncoder::~FakeVideoEncoder(){
 	delete temp;
     	delete f;
     }
-    lock_.Leave();
 }
 void FakeVideoEncoder::StartEncoder(){
     if(!running_){
@@ -97,7 +95,7 @@ void FakeVideoEncoder::Run(){
         uint32_t enque_ts=0;
         if(que_len_>0){
             //rtc::CritScope crit(&que_lock_);
-            lock_.Enter();
+            LockScope ls(&lock_);;
             if(frames_.size()){
                 FakeFrameTs *temp=frames_.front();
 				f=temp->frame;
@@ -107,13 +105,12 @@ void FakeVideoEncoder::Run(){
 				delete temp;
 				que_len_--;
             }
-            lock_.Leave();
         }
         if(f){
-            uint32_t last=base_clock32();
+            uint32_t last=GetMilliSeconds();
             //emulate encoder delay
             usleep(40000);//40ms
-            uint32_t now=base_clock32();
+            uint32_t now=GetMilliSeconds();
             uint32_t delta=now-last;
 	    uint32_t queue_d=last-enque_ts;
 	    printf("%d,%d\n",delta,queue_d);
@@ -123,18 +120,14 @@ void FakeVideoEncoder::Run(){
 }
 void FakeVideoEncoder::OnIncomeData(const FakeFrame &frame){
     FakeFrame *copy=new FakeFrame(frame);
-    uint32_t now=base_clock32();
-    //rtc::CritScope crit(&que_lock_);
-    lock_.Enter();
+    uint32_t now=GetMilliSeconds();
+    LockScope ls(&lock_);
     if(!frames_.empty()){
     FakeFrameTs *last_fs=frames_.back();
     uint32_t delta=now-last_fs->enqueTs;
-   // printf("d %d\n",delta);
 	}
-
     FakeFrameTs *fs=new FakeFrameTs(copy,now);
     frames_.push_back(fs);
     que_len_++;
-    lock_.Leave();
 }
 }

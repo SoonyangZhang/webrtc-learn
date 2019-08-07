@@ -50,7 +50,7 @@ void TaskQueue::Process()
    //well that seems better,make the lock part as small as possible
 	while(m_running)
 	{
-        uint64_t time_ms=base_clock32();
+        uint64_t time_ms=GetMilliSeconds();
         std::list<std::unique_ptr<QueuedTask>> pending_tasks;
         {
            
@@ -85,7 +85,7 @@ void TaskQueue::PostTask(std::unique_ptr<QueuedTask>task)
 void TaskQueue::PostDelayedTask(std::unique_ptr<QueuedTask> task, uint32_t time_ms)
 {
 
-    uint64_t now=base_clock32();
+    uint64_t now=GetMilliSeconds();
     uint64_t future=now+time_ms;
     TaskEvent *event=new TaskEvent(future,std::move(task));
     LockScope lock(&pending_lock_);

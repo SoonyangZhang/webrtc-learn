@@ -7,6 +7,7 @@
 #include "H264Decoder.h"
 #include "my_thread.h"
 #include "lock.h"
+#include "base_time.h"
 namespace zsy{
 struct FrameTs{
   FrameTs(webrtc::VideoFrame *f,uint32_t ts):frame(f),enqueTs(ts){}	
@@ -56,10 +57,11 @@ private:
 	EncodedVideoCallback *sink_{nullptr};
 	YUVBuffer yuv_buf_;
 	uint8_t image_buf_[1024000];
-        int pic_id_{0};
+    int pic_id_{0};
 	int total_pid_{0};
-	int lock_{0};
+	AtomicLock lock_;
 	int que_len_{0};
-        int max_que_{4};
+    int max_que_{4};
+    int max_que_delay_{100};
 };
 }

@@ -68,7 +68,7 @@ FakeVideoEncoder::~FakeVideoEncoder(){
         StopEncoder();
     }
     //rtc::CritScope crit(&que_lock_);
-    atomic_lock(&lock_);
+    lock_.Enter();
     while(!frames_.empty()){
         FakeFrame *f=nullptr;
         FakeFrameTs *temp=frames_.front();
@@ -77,7 +77,7 @@ FakeVideoEncoder::~FakeVideoEncoder(){
 	delete temp;
     	delete f;
     }
-    atomic_unlock(&lock_);
+    lock_.Leave();
 }
 void FakeVideoEncoder::StartEncoder(){
     if(!running_){
@@ -97,7 +97,7 @@ void FakeVideoEncoder::Run(){
         uint32_t enque_ts=0;
         if(que_len_>0){
             //rtc::CritScope crit(&que_lock_);
-            atomic_lock(&lock_);
+            lock_.Enter();
             if(frames_.size()){
                 FakeFrameTs *temp=frames_.front();
 				f=temp->frame;
@@ -107,7 +107,7 @@ void FakeVideoEncoder::Run(){
 				delete temp;
 				que_len_--;
             }
-            atomic_unlock(&lock_);
+            lock_.Leave();
         }
         if(f){
             uint32_t last=base_clock32();
@@ -125,7 +125,7 @@ void FakeVideoEncoder::OnIncomeData(const FakeFrame &frame){
     FakeFrame *copy=new FakeFrame(frame);
     uint32_t now=base_clock32();
     //rtc::CritScope crit(&que_lock_);
-    atomic_lock(&lock_);
+    lock_.Enter();
     if(!frames_.empty()){
     FakeFrameTs *last_fs=frames_.back();
     uint32_t delta=now-last_fs->enqueTs;
@@ -135,6 +135,6 @@ void FakeVideoEncoder::OnIncomeData(const FakeFrame &frame){
     FakeFrameTs *fs=new FakeFrameTs(copy,now);
     frames_.push_back(fs);
     que_len_++;
-    atomic_unlock(&lock_);
+    lock_.Leave();
 }
 }

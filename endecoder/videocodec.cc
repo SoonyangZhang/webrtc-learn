@@ -69,14 +69,13 @@ void VideoEncoder::Run(){
 					,AV_PIX_FMT_YUV420P,image_buf_,
 					&out_size,&ft,false);
 			uint32_t now=rtc::TimeMillis();
-			uint32_t delta=now-f->timestamp_us()/1000;
-			uint32_t delta2=now-last;
+			uint32_t capture_ts=f->timestamp_us()/1000;
 			uint32_t queue=last-enque_ts;
 			pic_id_++;
-			std::cout<<total_pid_<<" "<<pic_id_<<" "<<out_size<<" "<<delta<<" "<<delta2<<" "<<
-			queue<<" "<<que_len_<<std::endl;
+			std::cout<<total_pid_<<" "<<pic_id_<<" "<<out_size<<" "<<
+			queue<<" "<<que_len_<<" ft "<<ft<<std::endl;
 			if(sink_){
-				sink_->OnEncodedImageCallBack(image_buf_,out_size,ft,delta);
+				sink_->OnEncodedImageCallBack(image_buf_,out_size,ft,capture_ts,now);
 			}
 			delete f;
 		}

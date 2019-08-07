@@ -35,4 +35,8 @@ YUV和RGB详解: https://segmentfault.com/a/1190000016443536
 
 export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH  
 
+ffplay h264 raw:  
+https://github.com/SoonyangZhang/base/tree/master/video_tool    
+ffplay -stats -f h264 ds2.h264  
+
 

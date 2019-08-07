@@ -22,7 +22,7 @@ add_definitions(-Dlinux_plat)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include_directories(${CMAKE_SOURCE_DIR}/)
 include_directories(${CMAKE_SOURCE_DIR}/base)
-include_directories(${CMAKE_SOURCE_DIR}/fun_test)
+include_directories(${CMAKE_SOURCE_DIR}/record)
 include_directories(${CMAKE_SOURCE_DIR}/fake)
 include_directories(${CMAKE_SOURCE_DIR}/bmp2jpeg)
 include_directories(${CMAKE_SOURCE_DIR}/video_capture)
@@ -37,7 +37,8 @@ LINK_DIRECTORIES(/usr/local/lib)
 add_subdirectory(endecoder)
 
 set(zsy_LIB
-fun_test/yuvrecord.cc
+record/yuv_record.cc
+record/h264_record.cc
 )
 add_library(zsy STATIC ${zsy_LIB})
 
@@ -54,6 +55,7 @@ add_library(bmp2jp STATIC ${bmp2jp_LIB})
 set(base_LIB
 base/my_thread.cc
 base/base_time.cc
+base/task_queue.cc
 )
 add_library(base STATIC ${base_LIB})
 
@@ -89,3 +91,4 @@ target_link_libraries(${EXECUTABLE_NAME} base pthread)
 set(EXECUTABLE_NAME "t_fake")
 add_executable(${EXECUTABLE_NAME} ${CMAKE_SOURCE_DIR}/fake/fake_test.cc)
 target_link_libraries(${EXECUTABLE_NAME} fake base pthread)
+

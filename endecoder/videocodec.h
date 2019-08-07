@@ -6,11 +6,7 @@
 #include "echo_h264_encoder.h"
 #include "H264Decoder.h"
 #include "my_thread.h"
-#define atomic_cas(dst, old, new) __sync_bool_compare_and_swap((dst), (old), (new))
-#define atomic_lock(ptr)\
-while(!atomic_cas(ptr,0,1))
-#define atomic_unlock(ptr)\
-while(!atomic_cas(ptr,1,0))
+#include "lock.h"
 namespace zsy{
 struct FrameTs{
   FrameTs(webrtc::VideoFrame *f,uint32_t ts):frame(f),enqueTs(ts){}	
@@ -20,7 +16,7 @@ struct FrameTs{
 class EncodedVideoCallback{
 public:
 	virtual ~EncodedVideoCallback(){}
-	virtual void OnEncodedImageCallBack(uint8_t *image,uint32_t size,int frametype,uint32_t delta)=0;
+	virtual void OnEncodedImageCallBack(uint8_t *image,uint32_t size,int frametype,uint32_t capture_ts,uint32_t encode_ts)=0;
 };
 class YUVBuffer{
 public:

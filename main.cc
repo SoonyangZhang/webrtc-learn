@@ -10,15 +10,18 @@
 #include <stdint.h>
 #include <iostream>
 #include <signal.h>
+#include <string>
 #include "video_capture.h"
-#include "yuvrecord.h"
+#include "yuv_record.h"
+#include "h264_record.h"
 #include "videocodec.h"
+#include "task_queue.h"
 using namespace webrtc;
 using namespace std;
 using namespace zsy;
 static const int kTestHeight = 720;//1080;//288;
 static const int kTestWidth = 1280;//1920;//352;
-static const int kTestFramerate = 30;
+static const int kTestFramerate = 22;//30;
 
 bool m_running=true;
 void signal_exit_handler(int sig)
@@ -30,6 +33,8 @@ int main()
 	signal(SIGTERM, signal_exit_handler);
     signal(SIGINT, signal_exit_handler);
     signal(SIGTSTP, signal_exit_handler);
+    TaskQueue worker;
+    worker.Start();
 	zsy::VideoCapture video_capture_;
 	video_capture_.SetUp() ;
 	video_capture_.OpenVideoCaptureDevice();
@@ -38,13 +43,16 @@ int main()
     capability.width = kTestWidth;
     capability.height = kTestHeight;
    	capability.maxFPS = kTestFramerate;
-   	FrameToFile sink(2);
-        VideoEncoder encoder(kTestWidth,kTestHeight,kTestFramerate);
+   	FrameToFile sink(&worker,2);
+    	VideoEncoder encoder(kTestWidth,kTestHeight,kTestFramerate);
    	video_capture_.AddSink(&sink);
 	video_capture_.AddSink(&encoder);
+
+	std::string name=std::to_string(kTestWidth)+"x"+std::to_string(kTestHeight);
+	H264Record h264sink(&worker,name);
+	encoder.RegisterSink(&h264sink);
 	video_capture_.StartCapture(capability);
 	encoder.StartEncoder();
-	sink.StartThread();
 	while(m_running)
 	{
 		
@@ -52,6 +60,6 @@ int main()
 	printf("stop capture\n");
 	video_capture_.StopCapture();
 	encoder.StopEncoder();
-	sink.StopThread();
+    worker.Stop();
 	return 0;
 }

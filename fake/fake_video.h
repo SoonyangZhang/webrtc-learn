@@ -5,13 +5,7 @@
 #include <list>
 #include "my_thread.h"
 #include "base_time.h"
-//#include "rtc_base/thread.h"
-//#include "rtc_base/timeutils.h"
-#define atomic_cas(dst, old, new) __sync_bool_compare_and_swap((dst), (old), (new))
-#define atomic_lock(ptr)\
-while(!atomic_cas(ptr,0,1))
-#define atomic_unlock(ptr)\
-while(!atomic_cas(ptr,1,0))
+#include "lock.h"
 namespace zsy{
 template <class T>
 class FakeSinkInterface{
@@ -79,7 +73,7 @@ public:
     void OnIncomeData(const FakeFrame &frame) override;
 private:
 	//rtc::CriticalSection que_lock_;
-    int lock_{0};
+    AtomicLock lock_;
 	std::list<FakeFrameTs*> frames_;
 	bool running_{false};
     int que_len_{0};

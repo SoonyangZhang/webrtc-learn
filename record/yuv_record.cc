@@ -2,11 +2,11 @@
 #include <string>
 #include <stdio.h>
 #include <memory>
-#include "yuvrecord.h"
-//#include "api/scoped_refptr.h"
+#include "yuv_record.h"
 #include "api/video/video_frame_buffer.h"
 namespace zsy{
-FrameToFile::FrameToFile(uint32_t max):max_record_(max){
+FrameToFile::FrameToFile(TaskQueue *worker,uint32_t max)
+:worker_(worker),max_record_(max){
 	std::string name("frame_info.txt");
 	info_.open(name.c_str(), std::fstream::out);
 }
@@ -14,7 +14,7 @@ FrameToFile::FrameToFile(uint32_t max):max_record_(max){
 FrameToFile::~FrameToFile(){
 	info_.close();
 }
-void FrameToFile::StartThread(){
+/*void FrameToFile::StartThread(){
 	if(!running_){
 		running_=true;
 		rtc::Thread::Start();
@@ -30,24 +30,29 @@ void FrameToFile::Run(){
 	while(running_){
 		WriteFrameToFile();
 	}
-}
+}*/
 void FrameToFile::OnFrame(const webrtc::VideoFrame& frame){
 	int f_w=frame.width();
 	int f_h=frame.height();
-        int ms=frame.timestamp_us()/1000;
+    int ms=frame.timestamp_us()/1000;
 	WritePicInfo(f_w,f_h,ms);
 	if(pic_id_<=max_record_){
-		 webrtc::VideoFrame copy=frame;
-		 rtc::CritScope crit(&que_lock_);
-		 frames_.push_back(copy);
+		webrtc::VideoFrame copy=frame;
+		 LockScope crit(&que_lock_);
+		 frames_.push_back(copy);        
+		if(worker_){
+            worker_->PostTask([this](){
+                this->MayWriteFrameToDisk();
+            });
+        }
 	}
 }
-/*
-
- */
+void FrameToFile::MayWriteFrameToDisk(){
+    WriteFrameToFile();
+}
 void FrameToFile::WriteFrameToFile(){
-	rtc::CritScope crit(&que_lock_);
-	if(!frames_.empty()){
+        LockScope crit(&que_lock_);
+        if(!frames_.empty()){
 		webrtc::VideoFrame frame=frames_.front();
 		frames_.pop_front();
 		rtc::scoped_refptr<webrtc::I420BufferInterface> i420_buffer=

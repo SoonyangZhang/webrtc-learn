@@ -51,6 +51,9 @@ int main()
 	std::string name=std::to_string(kTestWidth)+"x"+std::to_string(kTestHeight);
 	H264Record h264sink(&worker,name);
 	encoder.RegisterSink(&h264sink);
+    VideoDecoder decoder(kTestHeight,kTestWidth);
+    decoder.StartDecoder();
+    encoder.RegisterSink(&decoder);
 	video_capture_.StartCapture(capability);
 	encoder.StartEncoder();
 	while(m_running)
@@ -60,6 +63,7 @@ int main()
 	printf("stop capture\n");
 	video_capture_.StopCapture();
 	encoder.StopEncoder();
+    decoder.StopDecoder();
     worker.Stop();
 	return 0;
 }

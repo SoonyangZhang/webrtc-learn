@@ -53,16 +53,12 @@ bmp2jpeg/jpeg.cc
 add_library(bmp2jp STATIC ${bmp2jp_LIB})
 
 set(base_LIB
-base/my_thread.cc
 base/base_time.cc
+base/callback.cc
+base/my_thread.cc
 base/task_queue.cc
 )
 add_library(base STATIC ${base_LIB})
-
-set(fake_LIB
-fake/fake_video.cc
-)
-add_library(fake STATIC ${fake_LIB})
 
 set(EXECUTABLE_NAME "video_capture")
 add_executable(${EXECUTABLE_NAME} main.cc)
@@ -88,9 +84,5 @@ target_link_libraries(${EXECUTABLE_NAME} h264endecoder  x264 avcodec avutil swsc
 set(EXECUTABLE_NAME "t_task")
 add_executable(${EXECUTABLE_NAME} ${CMAKE_SOURCE_DIR}/base/thread_test.cc)
 target_link_libraries(${EXECUTABLE_NAME} base pthread)
-set(EXECUTABLE_NAME "t_fake")
-add_executable(${EXECUTABLE_NAME} ${CMAKE_SOURCE_DIR}/fake/fake_test.cc)
-target_link_libraries(${EXECUTABLE_NAME} fake base pthread)
-
 #https://github.com/SoonyangZhang/base/tree/master/video_tool  
-#ffplay -stats -f h264 1280x720.h264
+

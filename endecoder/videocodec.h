@@ -102,6 +102,7 @@ public:
 	void Run() override;
 	void OnFrame(const webrtc::VideoFrame& frame) override;
 	bool RegisterSink(EncodedVideoCallback *cb);
+    void RegisterYUVRecord(rtc::VideoSinkInterface<webrtc::VideoFrame> *yuv);
 	void SetRate(uint32_t);
 private:
 	bool running_{false};
@@ -112,6 +113,7 @@ private:
 	rtc::CriticalSection que_lock_;
 	std::list<FrameTs> frames_;
 	std::list<EncodedVideoCallback*> sinks_;
+    rtc::VideoSinkInterface<webrtc::VideoFrame> *yuv_{nullptr};
 	YUVBuffer yuv_buf_;
 	uint8_t image_buf_[1024000];
     int pic_id_{0};
@@ -146,6 +148,7 @@ private:
 	X264_DECODER_H handler_;
     uint32_t image_count_{0};
     uint32_t max_record_{5};
+    uint32_t record_id_{0};
     uint32_t decode_id_{0};
 };
 }

@@ -7,35 +7,18 @@
 namespace zsy{
 FrameToFile::FrameToFile(TaskQueue *worker,uint32_t max)
 :worker_(worker),max_record_(max){
-	std::string name("frame_info.txt");
-	info_.open(name.c_str(), std::fstream::out);
+	//std::string name("frame_info.txt");
+	//info_.open(name.c_str(), std::fstream::out);
 }
 
 FrameToFile::~FrameToFile(){
-	info_.close();
+	//info_.close();
 }
-/*void FrameToFile::StartThread(){
-	if(!running_){
-		running_=true;
-		rtc::Thread::Start();
-	}
-}
-void FrameToFile::StopThread(){
-	if(running_){
-		running_=false;
-		rtc::Thread::Stop();
-	}
-}
-void FrameToFile::Run(){
-	while(running_){
-		WriteFrameToFile();
-	}
-}*/
 void FrameToFile::OnFrame(const webrtc::VideoFrame& frame){
-	int f_w=frame.width();
+	/*int f_w=frame.width();
 	int f_h=frame.height();
-    int ms=frame.timestamp_us()/1000;
-	WritePicInfo(f_w,f_h,ms);
+    	int ms=frame.timestamp_us()/1000;
+	WritePicInfo(f_w,f_h,ms);*/
 	if(pic_id_<=max_record_){
 		webrtc::VideoFrame copy=frame;
 		 LockScope crit(&que_lock_);

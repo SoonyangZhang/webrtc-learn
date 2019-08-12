@@ -216,7 +216,7 @@ void H264Encoder::config_param()
 	en_param_.b_annexb = 1;
 	en_param_.b_intra_refresh = 0;
 
-	en_param_.i_frame_reference = 4;
+	en_param_.i_frame_reference = /*4*/1;
 	en_param_.vui.b_fullrange = 1;
 	en_param_.i_sync_lookahead = 0;
 	en_param_.vui.i_colorprim = 2;

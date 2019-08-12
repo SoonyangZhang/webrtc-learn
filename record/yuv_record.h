@@ -21,7 +21,7 @@ private:
 	void WriteFrameToFile();
 	void WritePicInfo(int w,int h,int ms);
     TaskQueue *worker_{nullptr};
-	uint32_t pic_id_{1};
+	uint32_t pic_id_{0};
 	uint32_t max_record_{1};
     std::fstream info_;
 	bool pic_info_{true};

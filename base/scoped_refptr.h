@@ -88,10 +88,32 @@ class scoped_refptr {
     *pp = p;
   }
 
-  void swap(scoped_refptr<T>& r) { swap(&r.ptr_); }
-
- protected:
-  T* ptr_;
+void swap(scoped_refptr<T>& r) { swap(&r.ptr_); }
+template <typename U>
+friend U *GetPointer (const scoped_refptr<U> &p);
+template <typename U>
+friend U *PeekPointer (const scoped_refptr<U> &p);
+protected:
+T* ptr_;
 };
-
+template <typename U>
+U * PeekPointer (const scoped_refptr<U> &p)
+{
+return p.get();
+}
+template <typename T>
+scoped_refptr<T> Create (void)
+{
+   return scoped_refptr<T> (new T ());
+}
+template <typename T, typename T1>
+scoped_refptr<T> Create (T1 a1)
+{
+   return scoped_refptr<T> (new T (a1));
+}
+template <typename T, typename T1,typename T2>
+scoped_refptr<T> Create (T1 a1,T2 a2)
+{
+   return scoped_refptr<T> (new T (a1,a2));
+}
 }

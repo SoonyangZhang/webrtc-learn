@@ -43,14 +43,13 @@ int main()
     capability.width = kTestWidth;
     capability.height = kTestHeight;
    	capability.maxFPS = kTestFramerate;
-   	FrameToFile sink(&worker,2);
-    	VideoEncoder encoder(kTestWidth,kTestHeight,kTestFramerate);
-   	video_capture_.AddSink(&sink);
+    VideoEncoder encoder(kTestWidth,kTestHeight,kTestFramerate);
 	video_capture_.AddSink(&encoder);
-
+    FrameToFile yuv_record(&worker,5);
 	std::string name=std::to_string(kTestWidth)+"x"+std::to_string(kTestHeight);
 	H264Record h264sink(&worker,name);
 	encoder.RegisterSink(&h264sink);
+    encoder.RegisterYUVRecord(&yuv_record);
     VideoDecoder decoder(kTestHeight,kTestWidth);
     decoder.StartDecoder();
     encoder.RegisterSink(&decoder);

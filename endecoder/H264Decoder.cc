@@ -1,5 +1,5 @@
 #include "H264Decoder.h"
- 
+#include <iostream>
 H264Decoder::H264Decoder(void)
 {
 }
@@ -100,7 +100,7 @@ int H264Decoder::X264Decoder_Decode(X264_DECODER_H dwHandle, uint8_t *pDataIn, i
         
         if (pHandle->got_picture)
         {
-			
+			//std::cout<<" w" <<pHandle->picture->width<<" "<< pHandle->c->width<<std::endl;
             *nWidth = pHandle->c->width;
 			
             *nHeight = pHandle->c->height;

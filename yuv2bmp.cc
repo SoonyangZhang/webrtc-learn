@@ -5,6 +5,7 @@ https://blog.csdn.net/ctfysj/article/details/81299473
 #include <stdlib.h>
 #include <iostream>
 #include <string.h>
+#include <unistd.h>
 #define WIDTH 1280
 #define HEIGHT 720
 //转换矩阵
@@ -16,7 +17,7 @@ double YuvToRgb[3][3] = {1,       0,  1.4022,
 int WriteBmp(int width, int height, unsigned char *R,unsigned char *G,unsigned char *B, char *BmpFileName);
 
 //转换函数
-int Convert(char *file, int width, int height, int n)
+int Convert(char *file, char *bmp_out,int width, int height)
 {
     //变量声明
     int i = 0;
@@ -29,7 +30,7 @@ int Convert(char *file, int width, int height, int n)
     unsigned char* yuv = NULL;
     unsigned char* rgb = NULL;
     unsigned char* cTemp[6];
-    char BmpFileName[256];
+    //char BmpFileName[256];
 
     //申请空间
     int FrameSize = ImgSize + (ImgSize >> 1);
@@ -38,7 +39,7 @@ int Convert(char *file, int width, int height, int n)
     //读取指定文件中的指定帧
     if((fp = fopen(file, "rb")) == NULL)
         return 0;
-    fseek(fp, FrameSize*(n-1), SEEK_CUR);
+    //fseek(fp, FrameSize*(n-1), SEEK_CUR);
     fReadSize = fread(yuv, 1, FrameSize, fp);
     fclose(fp);
     if(fReadSize < FrameSize)
@@ -64,25 +65,75 @@ int Convert(char *file, int width, int height, int n)
             temp = cTemp[0][y*width+x] + (cTemp[1][(y/2)*(width/2)+x/2]-128) * YuvToRgb[2][1];
             cTemp[5][y*width+x] = temp<0 ? 0 : (temp>255 ? 255 : temp);
         }
-
-    //写到BMP文件中
-    sprintf(BmpFileName,"test.bmp");
-    WriteBmp(width, height, cTemp[3], cTemp[4], cTemp[5], BmpFileName);
+    //sprintf(BmpFileName,"test_%d.bmp",i);
+    WriteBmp(width, height, cTemp[3], cTemp[4], cTemp[5], bmp_out);
 
     free(yuv);
     free(rgb);
-    return n;
+    return 0;
 }
-//入口 没啥东西
-int main()
+const char *prefix="test_";
+const char *format=".bmp";
+void set_bmp_name(char *in,char *dst,int len){
+    memset(dst,0,len);
+    int prefix_len=strlen(prefix);
+    memcpy(dst,prefix,prefix_len);
+    dst+=prefix_len;
+    int in_len=strlen(in);
+    int copy=in_len>len?len:in_len;
+    int i=0;
+    while(i<in_len){
+        if(in[i]=='.'){
+            break;
+        }
+        i++;
+    }
+    if(i){
+        if(i<copy){
+            copy=i;
+        }
+        memcpy(dst,in,copy);
+    }else{
+        memcpy(dst,in,copy);
+    }
+    dst+=copy;
+    int tmp_len=strlen(format);
+    memcpy(dst,format,tmp_len);
+    return;
+}
+int main(int argc, char* argv[])
 {
     int i=1;
-//    for( i=0; i<260; i++)
-        Convert("1280X720_1.yuv", WIDTH, HEIGHT, i);//调用上面的Convert,获取文件的第i帧
+    int w=WIDTH;
+    int h=HEIGHT;
+    char yuv_in[128]="0_decode.yuv";
+    char bmp_out[128]="test_0_decode.bmp";
+    int opt = 0;;
+    while ((opt = getopt(argc, argv, "i:w::h::")) != -1){
+        switch (opt){
+            case 'i':{
+                memset(yuv_in,0,sizeof(yuv_in));
+                memcpy(yuv_in,optarg,strlen(optarg));
+                set_bmp_name(yuv_in,bmp_out,sizeof(bmp_out));
+                break;
+            }
+            case 'w':{
+                w=atoi(optarg);
+                break;
+            }
+            case 'h':{
+                h=atoi(optarg);
+                break;
+            }
+            default:
+                break;
+        }
+    }
+    //printf("%s,%s\n",yuv_in,bmp_out);
+    Convert(yuv_in,bmp_out,w, h);
     return 0;
 }
 
-//写BMP  不必关注
 int WriteBmp(int width, int height, unsigned char *R,unsigned char *G,unsigned char *B, char *BmpFileName)
 {
     int x=0;

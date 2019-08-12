@@ -63,7 +63,8 @@ void VideoEncoder::Run(){
 			int out_size=0;
 			int ft=0;
 			uint32_t last=GetMilliSeconds();
-			encoder_->encode(yuv_buf_.data(),size
+            bool ret=false;
+			ret=encoder_->encode(yuv_buf_.data(),size
 					,AV_PIX_FMT_YUV420P,image_buf_,
 					&out_size,&ft,false);
 			uint32_t now=GetMilliSeconds();
@@ -72,10 +73,15 @@ void VideoEncoder::Run(){
 			pic_id_++;
 			std::cout<<total_pid_<<" "<<pic_id_<<" "<<out_size<<" "<<
 			queue<<" "<<que_len_<<std::endl;
-            for(auto it=sinks_.begin();it!=sinks_.end();it++){
-                EncodedVideoCallback *cb=(*it);
-                cb->OnEncodedImageCallBack(image_buf_,out_size,ft,capture_ts,now);
+            if(ret){
+                for(auto it=sinks_.begin();it!=sinks_.end();it++){
+                    EncodedVideoCallback *cb=(*it);
+                    cb->OnEncodedImageCallBack(image_buf_,out_size,ft,capture_ts,now);
+                }                
+            }else{
+                std::cout<<"encode failed"<<std::endl;
             }
+
 			delete f;
 		}
 	}
@@ -95,6 +101,9 @@ void VideoEncoder::OnFrame(const webrtc::VideoFrame& frame){
      if(queue_delay>max_que_delay_){
          return ;
      }}
+     if(yuv_){
+         yuv_->OnFrame(frame);
+     }
 	 frames_.push_back(FrameTs(copy,now));
 	 que_len_++;
 }
@@ -110,6 +119,9 @@ bool VideoEncoder::RegisterSink(EncodedVideoCallback *cb){
         sinks_.push_back(cb); 
     }
     return success;
+}
+void VideoEncoder::RegisterYUVRecord(rtc::VideoSinkInterface<webrtc::VideoFrame> *yuv){
+    yuv_=yuv;
 }
 void VideoEncoder::SetRate(uint32_t r){
 	encoder_->set_bitrate(r);
@@ -145,6 +157,7 @@ void VideoDecoder::Run(){
             while(!images_.empty()){
                 EncodeImage image=std::move(images_.front());
                 images_.pop_front();
+		que_len_--;
                 temp.push_back(std::move(image));
             }
         }
@@ -157,26 +170,32 @@ void VideoDecoder::Run(){
             int ret=0;
             ret=decoder_.X264Decoder_Decode(handler_,image.data(),image.size(),yuv_buf_.data()
 					,&decode_size,&w,&h);
-            if(!ret){
-                std::cout<<"decode image "<<" "<<h<<" "<<w<<std::endl;
+            if(ret!=0){
+                std::cout<<"decode error"<<std::endl;
+            }else{  
                 std::string name=std::to_string(decode_id_)+"_decode.yuv";
-                std::ofstream out;
-                out.open(name.c_str(),std::ofstream::binary);
-                out.write((const char*)yuv_buf_.data(),yuv_buf_.size());
-                out.close();
-                decode_id_++;
+                if(record_id_<max_record_){
+		    std::cout<<"decode image "<<" "<<h<<" "<<w<<std::endl;
+                    std::ofstream out;
+                    out.open(name.c_str(),std::ofstream::binary);
+                    out.write((const char*)yuv_buf_.data(),yuv_buf_.size());
+                    out.close();                    
+                }
+                record_id_++;
             }
+            decode_id_++; 
         }
     }
 }
 void VideoDecoder::OnEncodedImageCallBack(uint8_t *data,uint32_t size,int frametype,
     uint32_t capture_ts,uint32_t encode_ts){
-    if(image_count_>max_record_){
-        return;
+    image_count_++;
+    //test impact of lost p frame
+    if(image_count_==3||image_count_==4||image_count_==5||image_count_==6||image_count_==7||image_count_==8){
+        return ;
     }
     LockScope ls(&que_lock_);
     que_len_++;
-    image_count_++;
     EncodeImage image(data,size,frametype,capture_ts,encode_ts);
     images_.push_back(std::move(image));
 }

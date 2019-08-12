@@ -116,7 +116,9 @@ class RefCounter {
   bool HasOneRef() const {
     return AtomicOps::AcquireLoad(&ref_count_) == 1;
   }
-
+  int GetRefCount() const{
+      return ref_count_;
+  }
  private:
   volatile int ref_count_;
 };
@@ -180,6 +182,28 @@ class RefCountedObject : public T {
 
   BASE_DISALLOW_COPY_AND_ASSIGN(RefCountedObject);
 };
+class empty{};
+template<typename T,typename Parent=empty>
+class SimpleRefCount:public Parent{
+public:
+    SimpleRefCount(){}
+  virtual void AddRef() const { ref_count_.IncRef(); }
+
+  virtual RefCountReleaseStatus Release() const {
+    const auto status = ref_count_.DecRef();
+    if (status == RefCountReleaseStatus::kDroppedLastRef) {
+      delete static_cast<T*> (const_cast<SimpleRefCount *> (this));
+    }
+    return status;
+  }
+  int GetRefCount(){
+      return ref_count_.GetRefCount();
+  }
+protected:
+    virtual ~SimpleRefCount(){}
+    mutable RefCounter ref_count_{0};
+    BASE_DISALLOW_COPY_AND_ASSIGN(SimpleRefCount);
+};
 /*
 class Image:public RefCountInterface{
 public:
@@ -199,6 +223,18 @@ int main(){
     std::cout<<"hello world"<<std::endl;
     return 0;
 }
+*/
+/*
+class Image:public SimpleRefCount<Image>{
+public:
+    Image(){
+    }
+    ~Image(){
+        printf("dtor\n");
+    }
+private:
+
+};
 */
 }
 

@@ -37,9 +37,28 @@ export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 
 ffplay h264 raw:  
 https://github.com/SoonyangZhang/base/tree/master/video_tool    
-ffplay -stats -f h264 ds2.h264  
+ffplay -stats -f h264 1280x720.h264  
 
 
 h264 tool:  
 https://github.com/latelee/H264BSAnalyzer 
+
+x264 slice type
+```
+* Slice type */
+#define X264_TYPE_AUTO          0x0000  /* Let x264 choose the right type */
+#define X264_TYPE_IDR           0x0001
+#define X264_TYPE_I             0x0002
+#define X264_TYPE_P             0x0003
+#define X264_TYPE_BREF          0x0004  /* Non-disposable B-frame */
+#define X264_TYPE_B             0x0005
+```
+slice type  
+http://gentlelogic.blogspot.com/2011/11/exploring-h264-part-2-h264-bitstream.html  
+指数哥伦布编码：
+https://www.jianshu.com/p/f4f3b0764cec  
+x264  preset
+https://blog.csdn.net/NB_vol_1/article/details/78363559  
+
+
 

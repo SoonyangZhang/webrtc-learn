@@ -213,7 +213,6 @@ public:
         printf("dtor\n");
     }
 private:
-
 };
 int test(){
     scoped_refptr<Image> iamge(new RefCountedObject<Image>());
@@ -233,9 +232,6 @@ public:
         printf("dtor\n");
     }
 private:
-
 };
 */
 }
-
-

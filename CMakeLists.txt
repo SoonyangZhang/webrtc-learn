@@ -27,6 +27,8 @@ include_directories(${CMAKE_SOURCE_DIR}/fake)
 include_directories(${CMAKE_SOURCE_DIR}/bmp2jpeg)
 include_directories(${CMAKE_SOURCE_DIR}/video_capture)
 include_directories(${CMAKE_SOURCE_DIR}/endecoder)
+include_directories(${CMAKE_SOURCE_DIR}/logging)
+include_directories(${CMAKE_SOURCE_DIR}/packetizer)
 
 include_directories(${CMAKE_SOURCE_DIR}/../webrtc/include/)
 LINK_DIRECTORIES(${CMAKE_SOURCE_DIR}/../webrtc/lib/x64/Release)
@@ -55,10 +57,19 @@ add_library(bmp2jp STATIC ${bmp2jp_LIB})
 set(base_LIB
 base/base_time.cc
 base/callback.cc
+base/copy_on_write_buffer.cc
 base/my_thread.cc
 base/task_queue.cc
 )
 add_library(base STATIC ${base_LIB})
+
+set(nonrtp_LIB
+packetizer/non_rtp.cc
+packetizer/non_rtp_h264.cc
+packetizer/non_rtp_packet_to_send.cc
+packetizer/non_rtp_packet.cc
+)
+add_library(nonrtp STATIC ${nonrtp_LIB})
 
 set(EXECUTABLE_NAME "video_capture")
 add_executable(${EXECUTABLE_NAME} main.cc)
@@ -86,3 +97,7 @@ add_executable(${EXECUTABLE_NAME} ${CMAKE_SOURCE_DIR}/base/thread_test.cc)
 target_link_libraries(${EXECUTABLE_NAME} base pthread)
 #https://github.com/SoonyangZhang/base/tree/master/video_tool  
 
+
+set(EXECUTABLE_NAME "t_pakcet")
+add_executable(${EXECUTABLE_NAME} ${CMAKE_SOURCE_DIR}/packetizer/packet_test.cc)
+target_link_libraries(${EXECUTABLE_NAME} base nonrtp)

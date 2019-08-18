@@ -18,4 +18,3 @@
 #define BASE_DISALLOW_IMPLICIT_CONSTRUCTORS(TypeName) \
   TypeName() = delete;                               \
   BASE_DISALLOW_COPY_AND_ASSIGN(TypeName)
-

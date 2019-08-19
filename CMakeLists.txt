@@ -22,13 +22,13 @@ add_definitions(-Dlinux_plat)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include_directories(${CMAKE_SOURCE_DIR}/)
 include_directories(${CMAKE_SOURCE_DIR}/base)
-include_directories(${CMAKE_SOURCE_DIR}/record)
-include_directories(${CMAKE_SOURCE_DIR}/fake)
 include_directories(${CMAKE_SOURCE_DIR}/bmp2jpeg)
-include_directories(${CMAKE_SOURCE_DIR}/video_capture)
 include_directories(${CMAKE_SOURCE_DIR}/endecoder)
+include_directories(${CMAKE_SOURCE_DIR}/h264parser)
 include_directories(${CMAKE_SOURCE_DIR}/logging)
 include_directories(${CMAKE_SOURCE_DIR}/packetizer)
+include_directories(${CMAKE_SOURCE_DIR}/record)
+include_directories(${CMAKE_SOURCE_DIR}/video_capture)
 
 include_directories(${CMAKE_SOURCE_DIR}/../webrtc/include/)
 LINK_DIRECTORIES(${CMAKE_SOURCE_DIR}/../webrtc/lib/x64/Release)
@@ -68,8 +68,10 @@ packetizer/non_rtp.cc
 packetizer/non_rtp_h264.cc
 packetizer/non_rtp_packet_to_send.cc
 packetizer/non_rtp_packet.cc
+h264parser/h264_parser.cc
 )
 add_library(nonrtp STATIC ${nonrtp_LIB})
+
 
 set(EXECUTABLE_NAME "video_capture")
 add_executable(${EXECUTABLE_NAME} main.cc)
@@ -100,4 +102,8 @@ target_link_libraries(${EXECUTABLE_NAME} base pthread)
 
 set(EXECUTABLE_NAME "t_pakcet")
 add_executable(${EXECUTABLE_NAME} ${CMAKE_SOURCE_DIR}/packetizer/packet_test.cc)
+target_link_libraries(${EXECUTABLE_NAME} base nonrtp)
+
+set(EXECUTABLE_NAME "t_parser")
+add_executable(${EXECUTABLE_NAME} ${CMAKE_SOURCE_DIR}/h264parser/parser_test.cc)
 target_link_libraries(${EXECUTABLE_NAME} base nonrtp)

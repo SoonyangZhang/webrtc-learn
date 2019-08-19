@@ -4,6 +4,29 @@
 #include <fstream>
 #include <string>
 namespace zsy{
+EncodeImage::EncodeImage(const uint8_t*data,size_t len,uint32_t ft,
+            uint32_t capture_ts,uint32_t encode_ts){
+    buffer_=new RefCountedObject<Buffer>();
+    ft_=ft;
+    capture_ts_=capture_ts;
+    encode_ts_=encode_ts;
+    buffer_->SetSize(len);
+    buffer_->SetData(data,len);
+}
+const uint8_t *EncodeImage::data() const{
+    const uint8_t *ret=nullptr;
+    if(buffer_){
+        ret=buffer_.get()->data();
+    }
+    return ret;
+}
+uint8_t *EncodeImage::data(){
+    uint8_t *ret=nullptr;
+    if(buffer_){
+        ret=buffer_.get()->data();
+    }
+    return ret;
+}
 VideoEncoder::VideoEncoder(int width,int height,int fps)
 :width_(width),height_(height),fps_(fps),yuv_buf_(width*height*3/2){
 	encoder_.reset(new H264Encoder());
@@ -74,10 +97,13 @@ void VideoEncoder::Run(){
 			std::cout<<total_pid_<<" "<<pic_id_<<" "<<out_size<<" "<<
 			queue<<" "<<que_len_<<std::endl;
             if(ret){
-                for(auto it=sinks_.begin();it!=sinks_.end();it++){
-                    EncodedVideoCallback *cb=(*it);
-                    cb->OnEncodedImageCallBack(image_buf_,out_size,ft,capture_ts,now);
-                }                
+            	if(!sinks_.empty()){
+            		EncodeImage image(image_buf_,out_size,ft,capture_ts,now);
+                    for(auto it=sinks_.begin();it!=sinks_.end();it++){
+                        EncodedVideoCallback *cb=(*it);
+                        cb->OnEncodedImageCallBack(image);
+                    }
+            	}
             }else{
                 std::cout<<"encode failed"<<std::endl;
             }
@@ -155,14 +181,14 @@ void VideoDecoder::Run(){
         if(que_len_>0){
             LockScope ls(&que_lock_);
             while(!images_.empty()){
-                EncodeImage image=std::move(images_.front());
+                EncodeImage image=images_.front();
                 images_.pop_front();
-		que_len_--;
-                temp.push_back(std::move(image));
+                que_len_--;
+                temp.push_back(image);
             }
         }
         while(!temp.empty()){
-            EncodeImage image=std::move(temp.front());
+            EncodeImage image=temp.front();
             temp.pop_front();
             int decode_size=0;
             int h=0;
@@ -187,8 +213,7 @@ void VideoDecoder::Run(){
         }
     }
 }
-void VideoDecoder::OnEncodedImageCallBack(uint8_t *data,uint32_t size,int frametype,
-    uint32_t capture_ts,uint32_t encode_ts){
+void VideoDecoder::OnEncodedImageCallBack(EncodeImage &image){
     image_count_++;
     //test impact of lost p frame
     if(image_count_==3||image_count_==4||image_count_==5||image_count_==6||image_count_==7||image_count_==8){
@@ -196,8 +221,8 @@ void VideoDecoder::OnEncodedImageCallBack(uint8_t *data,uint32_t size,int framet
     }
     LockScope ls(&que_lock_);
     que_len_++;
-    EncodeImage image(data,size,frametype,capture_ts,encode_ts);
-    images_.push_back(std::move(image));
+    //do not use move;
+    images_.push_back(image);
 }
 
 }

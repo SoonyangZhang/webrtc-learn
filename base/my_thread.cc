@@ -51,6 +51,7 @@ bool MyThread::Start(){
 
 }
 void MyThread::Stop(){
+	running_=false;
     pthread_join(pid_,nullptr);
 }
 void MyThread::Sleep(int ms){

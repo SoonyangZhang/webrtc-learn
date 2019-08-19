@@ -174,7 +174,9 @@ class RefCountedObject : public T {
   // barrier needed for the owning thread to act on the object, knowing that it
   // has exclusive access to the object.
   virtual bool HasOneRef() const { return ref_count_.HasOneRef(); }
-
+  int GetRefCount(){
+      return ref_count_.GetRefCount();
+  }
  protected:
   virtual ~RefCountedObject() {}
 

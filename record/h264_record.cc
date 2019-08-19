@@ -13,12 +13,10 @@ H264Record::~H264Record(){
 	f_out_.close();
     info_.close();
 }
-void H264Record::OnEncodedImageCallBack(uint8_t *data,uint32_t size,int frametype,
-		uint32_t capture_ts,uint32_t encode_ts)
+void H264Record::OnEncodedImageCallBack(EncodeImage &image)
 {
-	EncodeImage image(data,size,frametype,capture_ts,encode_ts);
 	LockScope crit(&que_lock_);
-	images_.push_back(std::move(image));
+	images_.push_back(image);
 	if(worker_){
 		worker_->PostTask([this](){
 			this->MayWriteImageToDisk();
@@ -32,7 +30,7 @@ void H264Record::WriteImageToDisk(){
 	
 	LockScope crit(&que_lock_);
 	while(!images_.empty()){
-		EncodeImage image=std::move(images_.front());
+		EncodeImage image=images_.front();
 		images_.pop_front();
 		assert(image.size());
         uint32_t len=image.size();

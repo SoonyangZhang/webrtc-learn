@@ -2,22 +2,63 @@
 #include <memory>
 #include "rtc_base/thread.h"
 #include "rtc_base/criticalsection.h"
+#include "base/base_time.h"
+#include "base/atomic_ops.h"
+#include "base/buffer.h"
+#include "base/scoped_refptr.h"
+#include "base/my_thread.h"
+#include "base/lock.h"
 #include "video_header.h"
 #include "echo_h264_encoder.h"
 #include "H264Decoder.h"
-#include "my_thread.h"
-#include "lock.h"
-#include "base_time.h"
 namespace zsy{
 struct FrameTs{
   FrameTs(webrtc::VideoFrame *f,uint32_t ts):frame(f),enqueTs(ts){}	
   webrtc::VideoFrame *frame;
   uint32_t enqueTs;
 };
+class EncodeImage{
+public:
+    EncodeImage(const uint8_t*data,size_t len,uint32_t ft,
+                uint32_t capture_ts,uint32_t encode_ts);
+    ~EncodeImage(){}
+    EncodeImage(const EncodeImage&)=default;
+    EncodeImage& operator=(const EncodeImage&)=default;
+    //! caution, use copy,not move.
+    EncodeImage(EncodeImage&&r){
+        *this=std::move(r);
+    }
+    EncodeImage& operator=(EncodeImage&&r){
+        ft_=r.ft_;
+        capture_ts_=r.capture_ts_;
+        encode_ts_=r.encode_ts_;
+        buffer_=std::move(r.buffer_);
+        return *this;
+    }
+    const uint8_t *data() const;
+    uint8_t *data();
+    uint32_t size() const{
+        return buffer_->size();
+    }
+    uint32_t FrameType()const{
+        return ft_;
+    }
+    uint32_t CaptureTs() const{
+        return capture_ts_;
+    }
+    uint32_t EncodeTs() const{
+        return encode_ts_;
+    }
+private:
+    uint32_t ft_;
+    uint32_t capture_ts_;
+    uint32_t encode_ts_;
+    scoped_refptr<RefCountedObject<Buffer>> buffer_;
+};
 class EncodedVideoCallback{
 public:
 	virtual ~EncodedVideoCallback(){}
-	virtual void OnEncodedImageCallBack(uint8_t *data,uint32_t size,int frametype,uint32_t capture_ts,uint32_t encode_ts)=0;
+	virtual void OnEncodedImageCallBack(EncodeImage &image)=0;
 };
 class YUVBuffer{
 public:
@@ -38,60 +79,7 @@ public:
 private:
 	int size_{0};
 	std::unique_ptr<uint8_t[]>data_;
-	
-};
-class EncodeImage{
-public:
-    EncodeImage(uint8_t*data,uint32_t len,uint32_t ft,
-                uint32_t capture_ts,uint32_t encode_ts){
-    size_=len;
-    ft_=ft;
-    capture_ts_=capture_ts;
-    encode_ts_=encode_ts;
-    if(len){
-        uint8_t *buf=new uint8_t [len];
-        memcpy((void*)buf,(void*)data,len);
-        image_.reset(buf);
-    }
-}
-   ~EncodeImage(){
-   }
-    EncodeImage(const EncodeImage&)=delete;
-    EncodeImage & operator=(const EncodeImage&)=delete;
-    EncodeImage(EncodeImage&&r){
-        *this=std::move(r);
-    }
-    EncodeImage &operator=(EncodeImage&&r){
-        image_=std::move(r.image_);
-        size_=r.size_;
-        r.size_=0;
-        ft_=r.ft_;
-        capture_ts_=r.capture_ts_;
-        encode_ts_=r.encode_ts_;
-        return (*this);
 
-    }
-    uint8_t *data() const{
-        return (uint8_t*)image_.get();
-    }
-    uint32_t size() const{
-        return size_;
-    }
-    uint32_t FrameType()const{
-        return ft_;
-    }
-    uint32_t CaptureTs() const{
-        return capture_ts_;
-    }
-    uint32_t EncodeTs() const{
-        return encode_ts_;
-    }
-private:
-    std::unique_ptr<uint8_t []> image_;
-    uint32_t size_;
-    uint32_t ft_;
-    uint32_t capture_ts_;
-    uint32_t encode_ts_;
 };
 class VideoEncoder :public MyThread,public rtc::VideoSinkInterface<webrtc::VideoFrame>{
 public:
@@ -134,8 +122,7 @@ public:
         uint32_t len=height*width*3/2;
         yuv_buf_.resize(len);
     }
-    void OnEncodedImageCallBack(uint8_t *data,uint32_t size,int frametype,
-    uint32_t capture_ts,uint32_t encode_ts) override;
+    void OnEncodedImageCallBack(EncodeImage &image) override;
 private:
     uint32_t height_{0};
     uint32_t width_{0};

@@ -29,7 +29,7 @@ public:
     void Stop();
     static void Sleep(int ms);
     virtual void Run(){
-        if(fun_){
+        if(fun_&&running_){
             fun_(obj_);
         }
     }
@@ -37,6 +37,6 @@ private:
     ThreadRunFunction fun_{nullptr};
     void *obj_{nullptr};
     ThreadRef pid_;
-    
+    bool running_{true};
 };
 }

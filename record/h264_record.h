@@ -13,8 +13,7 @@ class H264Record:public EncodedVideoCallback{
 public:
 	H264Record(TaskQueue *worker,std::string &s);
 	~H264Record();
-	void OnEncodedImageCallBack(uint8_t *data,uint32_t size,int frametype,
-			uint32_t capture_ts,uint32_t encode_ts) override;
+	void OnEncodedImageCallBack(EncodeImage &image) override;
 	void MayWriteImageToDisk();
 private:
 	void WriteImageToDisk();

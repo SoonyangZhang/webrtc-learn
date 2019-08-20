@@ -16,6 +16,8 @@
 #include "h264_record.h"
 #include "videocodec.h"
 #include "task_queue.h"
+#include "rtc_send_stream.h"
+#include "rtc_recv_stream.h"
 using namespace webrtc;
 using namespace std;
 using namespace zsy;
@@ -53,6 +55,13 @@ int main()
     VideoDecoder decoder(kTestHeight,kTestWidth);
     decoder.StartDecoder();
     encoder.RegisterSink(&decoder);
+
+    RTCSendStream sender;
+    std::string packet_log("packet.txt");
+    RTCRecvStream receiver(packet_log);
+    sender.RegisterReceiver(&receiver);
+    encoder.RegisterSink(&sender);
+    sender.StartSender();
 	video_capture_.StartCapture(capability);
 	encoder.StartEncoder();
 	while(m_running)
@@ -64,5 +73,6 @@ int main()
 	encoder.StopEncoder();
     decoder.StopDecoder();
     worker.Stop();
+    sender.StopSender();
 	return 0;
 }

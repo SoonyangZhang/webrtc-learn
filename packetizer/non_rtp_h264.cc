@@ -1,8 +1,8 @@
 #include <memory.h>
-#include "non_rtp_h264.h"
-#include "h264_common.h"
-#include "byte_rw.h"
-#include "logging.h"
+#include "packetizer/non_rtp_h264.h"
+#include "packetizer/h264_common.h"
+#include "base/byte_rw.h"
+#include "logging/logging.h"
 namespace zsy{
 namespace{
 static const size_t kNalHeaderSize = 1;

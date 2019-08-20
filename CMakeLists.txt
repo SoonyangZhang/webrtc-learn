@@ -28,6 +28,7 @@ include_directories(${CMAKE_SOURCE_DIR}/h264parser)
 include_directories(${CMAKE_SOURCE_DIR}/logging)
 include_directories(${CMAKE_SOURCE_DIR}/packetizer)
 include_directories(${CMAKE_SOURCE_DIR}/record)
+include_directories(${CMAKE_SOURCE_DIR}/stream)
 include_directories(${CMAKE_SOURCE_DIR}/video_capture)
 
 include_directories(${CMAKE_SOURCE_DIR}/../webrtc/include/)
@@ -69,13 +70,15 @@ packetizer/non_rtp_h264.cc
 packetizer/non_rtp_packet_to_send.cc
 packetizer/non_rtp_packet.cc
 h264parser/h264_parser.cc
+stream/rtc_send_stream.cc
+stream/rtc_recv_stream.cc
 )
 add_library(nonrtp STATIC ${nonrtp_LIB})
 
 
 set(EXECUTABLE_NAME "video_capture")
 add_executable(${EXECUTABLE_NAME} main.cc)
-target_link_libraries(${EXECUTABLE_NAME}   h264endecoder base zsy webrtc_full  x264 avcodec avutil swscale pthread dl m)
+target_link_libraries(${EXECUTABLE_NAME}  nonrtp  h264endecoder base zsy webrtc_full  x264 avcodec avutil swscale pthread dl m)
 set(EXECUTABLE_NAME "fun_test")
 add_executable(${EXECUTABLE_NAME} fun_test.cc )
 target_link_libraries(${EXECUTABLE_NAME}  base zsy webrtc_full pthread)
@@ -100,7 +103,7 @@ target_link_libraries(${EXECUTABLE_NAME} base pthread)
 #https://github.com/SoonyangZhang/base/tree/master/video_tool  
 
 
-set(EXECUTABLE_NAME "t_pakcet")
+set(EXECUTABLE_NAME "t_packet")
 add_executable(${EXECUTABLE_NAME} ${CMAKE_SOURCE_DIR}/packetizer/packet_test.cc)
 target_link_libraries(${EXECUTABLE_NAME} base nonrtp)
 

@@ -1,5 +1,5 @@
 #pragma once
-#include "non_rtp_packet.h"
+#include "packetizer/non_rtp_packet.h"
 namespace zsy{
 class NonRtpPacketToSend:public NonRtpPacket{
 public:
@@ -10,8 +10,12 @@ public:
    kForwardErrorCorrection,  // FEC packets.
    kPadding                  // RTX or plain padding sent to maintain BWE.
  };
- NonRtpPacketToSend &operator=(const NonRtpPacketToSend&);
- NonRtpPacketToSend &operator=(NonRtpPacketToSend&&);
+ NonRtpPacketToSend();
+ ~NonRtpPacketToSend(){}
+ NonRtpPacketToSend(const NonRtpPacketToSend&)=default;
+ NonRtpPacketToSend(NonRtpPacketToSend&&)=default;
+ NonRtpPacketToSend &operator=(const NonRtpPacketToSend&)=default;
+ NonRtpPacketToSend &operator=(NonRtpPacketToSend&&)=default;
  // Time in local time base as close as it can to frame capture time.
  int64_t capture_time_ms() const { return capture_time_ms_; }
 

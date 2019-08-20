@@ -10,6 +10,9 @@ enum class H264PacketizationMode {
   NonInterleaved = 0,  // Mode 1 - STAP-A, FU-A is allowed
   SingleNalUnit        // Mode 0 - only single NALU allowed
 };
+enum PayloadType:uint8_t{
+	PT_H264=96,
+};
 struct PayloadSizeLimits {
   int max_payload_len = 1200;
   int first_packet_reduction_len = 0;

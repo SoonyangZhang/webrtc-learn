@@ -1,8 +1,8 @@
 #include <deque>
 #include <queue>
-#include "array_view.h"
-#include "non_rtp.h"
-#include "non_rtp_packet_to_send.h"
+#include "base/array_view.h"
+#include "packetizer/non_rtp.h"
+#include "packetizer/non_rtp_packet_to_send.h"
 namespace zsy{
 class NonRtpPacketizerH264{
 public:
@@ -38,4 +38,19 @@ private:
 	std::queue<PacketUnit> packets_;
 	int num_packets_left_{0};
 };
+/*class NonRtpDepacketizer{
+public:
+private:
+};
+class NonRtpDepacketizerH264{
+public:
+	NonRtpDepacketizerH264(){}
+	bool Parse(const uint8_t* payload_data,
+	             size_t payload_data_length);
+private:
+	  bool ParseFuaNalu(RtpDepacketizer::ParsedPayload* parsed_payload,
+	                    const uint8_t* payload_data);
+	  bool ProcessStapAOrSingleNalu(RtpDepacketizer::ParsedPayload* parsed_payload,
+	                                const uint8_t* payload_data);
+};*/
 }

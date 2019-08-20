@@ -10,6 +10,7 @@
 
 
 #pragma once
+#include <utility>
 #include "magic.h"
 #if defined(WIN_32)
 // clang-format off

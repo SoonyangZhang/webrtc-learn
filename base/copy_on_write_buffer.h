@@ -64,7 +64,9 @@ class CopyOnWriteBuffer {
       : CopyOnWriteBuffer(array, N) {}
 
   ~CopyOnWriteBuffer();
-
+  int GetRefCount() const {
+	  return buffer_.get()->GetRefCount();
+  }
   // Get a pointer to the data. Just .data() will give you a (const) uint8_t*,
   // but you may also use .data<int8_t>() and .data<char>().
   template <typename T = uint8_t,

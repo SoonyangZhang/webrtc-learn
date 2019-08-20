@@ -1,16 +1,17 @@
-#include "non_rtp_packet.h"
-#include "logging.h"
-#include "byte_rw.h"
+#include "packetizer/non_rtp_packet.h"
+#include "logging/logging.h"
+#include "base/byte_rw.h"
 namespace zsy{
 /*
- * PT(1)   ts(4)  ty(1);
+ * header PT(1)  ts(4) group_id(2) frame_id(2)
+ * payload ty(1);
  * ty: single,FU-A,STRAP-A
  * since I transmit the video packer on quic,
  * the header of RTP is thus overlooker
  * quic protocol I copy from google:https://github.com/SoonyangZhang/DrainQueueCongestion
  */
 namespace{
-	const size_t kFixedHeaderSize=5;
+	const size_t kFixedHeaderSize=9;
 	const size_t kDefaultPacketSize = 1500;
 }
 NonRtpPacket::NonRtpPacket():NonRtpPacket(kDefaultPacketSize){
@@ -19,7 +20,6 @@ NonRtpPacket::NonRtpPacket():NonRtpPacket(kDefaultPacketSize){
 NonRtpPacket::NonRtpPacket(size_t capacity):buffer_(capacity){
 	//ReserveHeaderSpace(kFixedHeaderSize);
 }
-NonRtpPacket::NonRtpPacket(const NonRtpPacket&)=default;
 void NonRtpPacket::ReserveHeaderSpace(){
 	payload_offset_=kFixedHeaderSize;
 	DCHECK_GE(buffer_.capacity(),payload_offset_);
@@ -30,12 +30,22 @@ void NonRtpPacket::SetPayloadType(uint8_t payload_type){
 }
 void NonRtpPacket::SetTimestamp(uint32_t timestamp){
 	time_stamp_=timestamp;
-	ByteWriter<uint8_t>::WriteBigEndian(WriteAt(1),time_stamp_);
+	ByteWriter<uint32_t>::WriteBigEndian(WriteAt(1),time_stamp_);
+}
+void NonRtpPacket::SetGroupId(uint16_t group_id){
+	group_id_=group_id;
+	ByteWriter<uint16_t>::WriteBigEndian(WriteAt(5),group_id_);
+}
+void NonRtpPacket::SetFrameId(uint16_t frame_id){
+	frame_id_=frame_id;
+	ByteWriter<uint16_t>::WriteBigEndian(WriteAt(7),frame_id_);
 }
 void NonRtpPacket::Clear(){
     marker_=false;
     payload_type_=0;
     time_stamp_=0;
+    group_id_=0;
+    frame_id_=0;
 	payload_offset_=kFixedHeaderSize;
 	payload_size_=0;
 }
@@ -70,6 +80,8 @@ bool NonRtpPacket::ParseBuffer(const uint8_t *buffer,size_t size){
 	marker_=buffer[0]&0x08;
 	payload_type_=buffer[0]&0x7f;
 	time_stamp_=ByteReader<uint32_t>::ReadBigEndian((uint8_t*)&buffer[1]);
+	group_id_=ByteReader<uint16_t>::ReadBigEndian((uint8_t*)&buffer[5]);
+	frame_id_=ByteReader<uint16_t>::ReadBigEndian((uint8_t*)&buffer[7]);
 	payload_offset_=kFixedHeaderSize;
 	payload_size_=size-kFixedHeaderSize;
 	return true;

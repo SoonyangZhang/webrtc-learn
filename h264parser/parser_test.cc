@@ -10,17 +10,13 @@
 
 #include <list>
 #include <vector>
-#include "h264_common.h"
-#include "h264_parser.h"
+#include "packetizer/h264_common.h"
+#include "h264parser/h264_parser.h"
 #include "logging.h"
 
 using namespace zsy;
 using namespace std;
 const uint8_t kTypeMask=0x1F;
-void OnNaluType(uint8_t type){
-	int nalutype=type&kTypeMask;
-	std::cout<<nalutype<<std::endl;
-}
 class Frame{
 public:
 	Frame(){}
@@ -29,6 +25,16 @@ public:
 	}
 	size_t size() const{
 		return nalus_.size();
+	}
+	uint8_t FrameType() const{
+		uint8_t type=H264::kSlice;
+		for(auto it=nalus_.begin();it!=nalus_.end();it++){
+			if((it->data[0]&kTypeMask)==H264::kIdr){
+				type=H264::kIdr;
+				break;
+			}
+		}
+		return type;
 	}
 private:
 	std::list<H264NALU> nalus_;
@@ -64,16 +70,13 @@ int main(){
     while(f<total_to_parse){
         if(parser.AdvanceToNextNALU(&nalu)==H264Parser::kOk){
             uint8_t type=nalu.data[0]&kTypeMask;
-	    OnNaluType(type);
-            if((type==1)&&(nalu.start_code_size==4)){
-		frame=new Frame;
-		frames.push_back(frame);
-            }
-            if(frame_count==0){	
-		std::cout<<"new nalu "<<std::endl;
-            	frame->NewNalu(nalu);
-            }
-
+        if((type==1)&&(nalu.start_code_size==4)){
+        	frame=new Frame;
+        	frames.push_back(frame);
+          }
+        if(frame_count<total_to_parse){
+        	frame->NewNalu(nalu);
+        }
         }else{
             break;
         }
@@ -81,7 +84,8 @@ int main(){
     }
     frame=frames.front();
     int nalus=frame->size();
-    DLOG(INFO)<<"first frame "<<nalus;
+    int frame_type=frame->FrameType();
+    DLOG(INFO)<<"first frame "<<nalus<<" type "<<frame_type;
     while(!frames.empty()){
 	frame=frames.front();
 	frames.pop_front();

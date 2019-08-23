@@ -13,12 +13,12 @@ public:
 	void SetPayloadType(uint8_t paylload_type);
 	void SetTimestamp(uint32_t timestamp);
 	//IPPPPP (group 1) IPPPPPPP (group2)
-	void SetGroupId(uint16_t group_id);
-	void SetFrameId(uint16_t frame_id);
+	void SetGroupId(uint8_t group_id);
+	void SetPacketsPerFrame(uint8_t packets_per_frame);
 	uint8_t PayloadType() const { return payload_type_;}
 	uint32_t Timestamp() const {return time_stamp_;}
-	uint16_t GroupId() const { return group_id_;}
-	uint16_t FrameId() const {return frame_id_;}
+	uint8_t GroupId() const { return group_id_;}
+	uint8_t PacketsPerFrame() const {return packets_per_frame_;}
 	void Clear();
 	uint8_t *WriteAt(size_t offset){
 		return buffer_.data()+offset;}
@@ -53,8 +53,8 @@ private:
 	bool marker_;
 	uint8_t payload_type_{0};
 	uint32_t time_stamp_{0};
-	uint16_t group_id_{0};
-	uint16_t frame_id_{0};
+	uint8_t group_id_{0};
+	uint8_t packets_per_frame_{0};
 	CopyOnWriteBuffer buffer_;
 	size_t payload_offset_{0};
 	size_t payload_size_{0};

@@ -33,14 +33,14 @@ int main(){
     rtp_send->SetPayloadType(1);
     rtp_send->SetTimestamp(1234);
     rtp_send->SetGroupId(23);
-    rtp_send->SetFrameId(78);
+    rtp_send->SetPacketsPerFrame(78);
     printf("left %d\n",h264_packetizer.num_packet_left());
     bool ret=false;
     ret=h264_packetizer.NextPacket(rtp_send.get());
     if(ret){
-    uint8_t type=*(rtp_send->ReadAt(9));
+    uint8_t type=*(rtp_send->ReadAt(7));
     uint32_t value=type;
-    uint16_t tmp=ByteReader<uint16_t>::ReadBigEndian(rtp_send->ReadAt(10));
+    uint16_t tmp=ByteReader<uint16_t>::ReadBigEndian(rtp_send->ReadAt(8));
     uint32_t len=tmp;
     size_t size=rtp_send->size();
     printf("%x len %d %d\n",value,len,size);
@@ -53,8 +53,10 @@ int main(){
     NonRtpPacket parser;
     ret=parser.Parse(ptr,rtp_send->size());
     if(ret){
-    	std::cout<<parser.Timestamp()<<" "<<parser.GroupId()<<" "
-    			<<parser.FrameId()<<std::endl;
+        uint32_t packets_per_frame=parser.PacketsPerFrame();
+        uint32_t group_id=parser.GroupId();
+    	std::cout<<parser.Timestamp()<<" "<<group_id<<" "
+    			<<packets_per_frame<<std::endl;
     }
     return 0;
 }

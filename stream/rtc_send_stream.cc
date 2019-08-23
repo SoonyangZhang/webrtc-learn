@@ -64,10 +64,17 @@ void RTCSendStream::PakcetizeImage(){
 		temp.pop_front();
 		uint32_t capture_ts=image.CaptureTs();
 		uint32_t ft=image.FrameType();
+        bool key_frame=false;
+        uint8_t payload_type=PT_H264_DELTA;
+        if(ft==X264_TYPE_IDR||ft==X264_TYPE_I){
+        	key_frame=true;
+        	payload_type=PT_H264_KEY;
+        }
 		std::list<H264NALU> nalus;
 	    H264Parser parser;
 	    const uint8_t *start=image.data();
 	    size_t frame_len=image.size();
+	    DLOG(INFO)<<"frame len "<<frame_len;
 	    parser.SetStream(start,frame_len);
 	    while(true){
 	    	H264NALU nalu;
@@ -86,6 +93,7 @@ void RTCSendStream::PakcetizeImage(){
 	    	i++;
 	    }
 	    if(i>0){
+	    	frame_id_++;
 	        ArrayView<const uint8_t> payload(start,frame_len);
 	        PayloadSizeLimits limits;
 	        NonRtpPacketizerH264  h264_packetizer(payload,limits,H264PacketizationMode::NonInterleaved,header);
@@ -96,10 +104,10 @@ void RTCSendStream::PakcetizeImage(){
 	        for(i=0;i<num_packets;i++){
 	        	packet=new NonRtpPacketToSend();
 	        	packet->ReserveHeaderSpace();
-	        	packet->SetPayloadType(PT_H264);
+	        	packet->SetPayloadType(payload_type);
 	        	packet->SetTimestamp(capture_ts);
 	        	packet->SetGroupId(group_id_);
-	        	packet->SetFrameId(frame_id_);
+	        	packet->SetPacketsPerFrame(num_packets);
 	        	ret=h264_packetizer.NextPacket(packet);
 	        	if(ret){
 	        		size_t packet_size=packet->size();
@@ -113,8 +121,7 @@ void RTCSendStream::PakcetizeImage(){
 	        }
 	        DCHECK_EQ(h264_packetizer.num_packet_left(),0);
 	    }
-		frame_id_++;
-		if((!first_frame_)&&(ft==X264_TYPE_IDR||ft==X264_TYPE_I)){
+		if((!first_frame_)&&key_frame){
 			group_id_++;
 		}
 		if(first_frame_){
@@ -123,13 +130,17 @@ void RTCSendStream::PakcetizeImage(){
 	}
 }
 void RTCSendStream::SendPacket(){
+    if(frame_id_>5){
+    	return;
+    }
 	while(!packets_.empty()){
 		auto it=packets_.begin();
+		uint64_t offset=it->first;
 		SendPacketInfo info=it->second;
 		NonRtpPacketToSend *packet=info.buffer;
 		size_t length=info.length;
 		if(target_){
-			target_->OnNewData(packet->data(),length);
+			target_->OnNewData(offset,packet->data(),length);
 		}
 		wait_send_offset_+=length;
 		info.DeleteBuffer();

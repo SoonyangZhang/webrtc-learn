@@ -3,7 +3,7 @@
 #include "base/byte_rw.h"
 namespace zsy{
 /*
- * header PT(1)  ts(4) group_id(2) frame_id(2)
+ * header PT(1)  ts(4) group_id(1) packets_per_frame(1)
  * payload ty(1);
  * ty: single,FU-A,STRAP-A
  * since I transmit the video packer on quic,
@@ -11,7 +11,7 @@ namespace zsy{
  * quic protocol I copy from google:https://github.com/SoonyangZhang/DrainQueueCongestion
  */
 namespace{
-	const size_t kFixedHeaderSize=9;
+	const size_t kFixedHeaderSize=7;
 	const size_t kDefaultPacketSize = 1500;
 }
 NonRtpPacket::NonRtpPacket():NonRtpPacket(kDefaultPacketSize){
@@ -32,20 +32,20 @@ void NonRtpPacket::SetTimestamp(uint32_t timestamp){
 	time_stamp_=timestamp;
 	ByteWriter<uint32_t>::WriteBigEndian(WriteAt(1),time_stamp_);
 }
-void NonRtpPacket::SetGroupId(uint16_t group_id){
+void NonRtpPacket::SetGroupId(uint8_t group_id){
 	group_id_=group_id;
-	ByteWriter<uint16_t>::WriteBigEndian(WriteAt(5),group_id_);
+	WriteAt(5,group_id_);
 }
-void NonRtpPacket::SetFrameId(uint16_t frame_id){
-	frame_id_=frame_id;
-	ByteWriter<uint16_t>::WriteBigEndian(WriteAt(7),frame_id_);
+void NonRtpPacket::SetPacketsPerFrame(uint8_t packets_per_frame){
+	packets_per_frame_=packets_per_frame;
+	WriteAt(6,packets_per_frame);
 }
 void NonRtpPacket::Clear(){
     marker_=false;
     payload_type_=0;
     time_stamp_=0;
     group_id_=0;
-    frame_id_=0;
+    packets_per_frame_=0;
 	payload_offset_=kFixedHeaderSize;
 	payload_size_=0;
 }
@@ -80,8 +80,8 @@ bool NonRtpPacket::ParseBuffer(const uint8_t *buffer,size_t size){
 	marker_=buffer[0]&0x08;
 	payload_type_=buffer[0]&0x7f;
 	time_stamp_=ByteReader<uint32_t>::ReadBigEndian((uint8_t*)&buffer[1]);
-	group_id_=ByteReader<uint16_t>::ReadBigEndian((uint8_t*)&buffer[5]);
-	frame_id_=ByteReader<uint16_t>::ReadBigEndian((uint8_t*)&buffer[7]);
+	group_id_=buffer[5];
+	packets_per_frame_=buffer[6];
 	payload_offset_=kFixedHeaderSize;
 	payload_size_=size-kFixedHeaderSize;
 	return true;

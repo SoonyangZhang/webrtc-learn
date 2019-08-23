@@ -45,8 +45,8 @@ private:
 	void SendPacket();
 	bool running_{true};
 	bool first_frame_{true};
+	uint32_t frame_id_{0};
 	uint16_t group_id_{0};
-	uint16_t frame_id_{0};
 	int64_t offset_{0};
 	int64_t wait_send_offset_{0};
 	AtomicLock que_lock_;

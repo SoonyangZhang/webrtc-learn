@@ -1,3 +1,4 @@
+#pragma once
 #include <deque>
 #include <queue>
 #include "base/array_view.h"

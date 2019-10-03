@@ -6,7 +6,8 @@
 */
 
 #include "echo_h264_encoder.h"
-
+#include "logging.h"
+#include <iostream>
 /*load ffmpeg lib*/
 //#pragma comment(lib, "avcodec.lib")
 //#pragma comment(lib, "avutil.lib")
@@ -20,7 +21,13 @@ typedef struct
 	uint32_t	max_rate;				/*最大码率，kbps*/
 	uint32_t	min_rate;				/*最小码率, kbps*/
 }encoder_resolution_t;
-
+void my_memcpy(uint8_t *dst,uint8_t*in,size_t size){
+    size_t i=0;
+    for(i=0;i<size;i++){
+        dst[i]=in[i];
+    }
+    return;
+}
 static encoder_resolution_t resolution_infos[RESOLUTIONS_NUMBER] = {
 	{ VIDEO_120P, PIC_WIDTH_160, PIC_HEIGHT_120, 64, 32 },
 	{ VIDEO_240P, PIC_WIDTH_320, PIC_HEIGHT_240, 180, 64 },
@@ -85,13 +92,13 @@ bool H264Encoder::init(int frame_rate, int src_width, int src_height, int dst_wi
 		return false;
 
 	curr_resolution_ = max_resolution_;
-	bitrate_kbps_ = (resolution_infos[curr_resolution_].max_rate + resolution_infos[curr_resolution_].min_rate) / 2;
+	bitrate_kbps_ = (resolution_infos[curr_resolution_].min_rate + resolution_infos[curr_resolution_].max_rate) / 2;
 
 	if (!open_encoder())
 		return false;
 
 	inited_ = true;
-
+	//set_bitrate(bitrate_kbps_);//add by zsy
 	return true;
 }
 
@@ -159,7 +166,6 @@ void H264Encoder::set_bitrate(uint32_t bitrate_kbps)
 		en_param_.rc.i_bitrate = bitrate_kbps_ - bitrate_kbps_ / 4;
 		if (en_param_.rc.i_bitrate < resolution_infos[curr_resolution_].min_rate)
 			bitrate_kbps_ = resolution_infos[curr_resolution_].min_rate;
-		printf("reconfig\n");
 		/*从新配置x.264的码率,及时生效*/
 		if (en_h_ != NULL)
 			x264_encoder_reconfig(en_h_, &en_param_);
@@ -199,8 +205,8 @@ void H264Encoder::config_param()
 	/*en_param_.rc.i_qp_min = 5;
 	en_param_.rc.i_qp_max = 40;
 	en_param_.rc.i_qp_constant = 24;*/
-	en_param_.rc.i_bitrate = res.min_rate;
-	en_param_.rc.i_vbv_max_bitrate = (res.min_rate + res.max_rate) / 2;
+	en_param_.rc.i_bitrate = 1500;//res.min_rate;
+	en_param_.rc.i_vbv_max_bitrate = (res.min_rate+ res.max_rate) / 2;
 	en_param_.i_bframe = 0;
 
 	 
@@ -278,8 +284,9 @@ bool H264Encoder::encode(uint8_t *in, int in_size, enum AVPixelFormat src_pix_fm
 
 	int ret;
 	static AVPicture pic = { 0 };
-
-	try_change_resolution();
+	//when I set the bitrate below the range [min,max], this will
+	//chanhe resolution and cause memcpy segment.
+	//try_change_resolution();
 
 	en_param_.i_frame_total++;
 	if (src_pix_fmt == AV_PIX_FMT_RGB24 || src_pix_fmt == AV_PIX_FMT_BGR24){
@@ -292,6 +299,13 @@ bool H264Encoder::encode(uint8_t *in, int in_size, enum AVPixelFormat src_pix_fm
 			int chroma_size = luma_size >> 2;
 			int offset_u=luma_size*sizeof(uint8_t);
 			int offset_v=offset_u+chroma_size*sizeof(uint8_t);
+			CHECK(in_size>=luma_size*3/2);
+			/*std::cout<<std::endl;
+            for(size_t i=0;i<en_picture_.img.i_plane;i++){
+                std::cout<<"i: "<<i<<" "<<en_picture_.img.i_stride[i]<<std::endl;
+            }
+            std::cout<<std::endl;
+			*/
 			memcpy(en_picture_.img.plane[0],in,luma_size*sizeof(uint8_t));
 			memcpy(en_picture_.img.plane[1],in+offset_u,chroma_size*sizeof(uint8_t));
 			memcpy(en_picture_.img.plane[2],in+offset_v,chroma_size*sizeof(uint8_t));

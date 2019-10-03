@@ -1,5 +1,6 @@
 #include "rtc_base/timeutils.h"
-#include "videocodec.h"
+#include "endecoder/videocodec.h"
+#include "record/yuv_record.h"
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -16,19 +17,20 @@ EncodeImage::EncodeImage(const uint8_t*data,size_t len,uint32_t ft,
 const uint8_t *EncodeImage::data() const{
     const uint8_t *ret=nullptr;
     if(buffer_){
-        ret=buffer_.get()->data();
+        ret=buffer_->data();
     }
     return ret;
 }
 uint8_t *EncodeImage::data(){
     uint8_t *ret=nullptr;
     if(buffer_){
-        ret=buffer_.get()->data();
+        ret=buffer_->data();
     }
     return ret;
 }
 VideoEncoder::VideoEncoder(int width,int height,int fps)
-:width_(width),height_(height),fps_(fps),yuv_buf_(width*height*3/2){
+:width_(width),height_(height),fps_(fps){
+	yuv_buf_=new RefCountedObject<Buffer>(width*height*3/2);
 	encoder_.reset(new H264Encoder());
 }
 VideoEncoder::~VideoEncoder(){
@@ -80,14 +82,14 @@ void VideoEncoder::Run(){
 			int width=f->width();
 			int height=f->height();
 			int size = width*height * 3 / 2;
-			yuv_buf_.resize(size);
+			yuv_buf_->SetSize(size);
 			
-			webrtc::ConvertFromI420(*f, webrtc::kI420, 0, yuv_buf_.data());
+			webrtc::ConvertFromI420(*f, webrtc::kI420, 0, yuv_buf_->data());
 			int out_size=0;
 			int ft=0;
 			uint32_t last=GetMilliSeconds();
             bool ret=false;
-			ret=encoder_->encode(yuv_buf_.data(),size
+			ret=encoder_->encode(yuv_buf_->data(),size
 					,AV_PIX_FMT_YUV420P,image_buf_,
 					&out_size,&ft,false);
 			uint32_t now=GetMilliSeconds();
@@ -128,7 +130,10 @@ void VideoEncoder::OnFrame(const webrtc::VideoFrame& frame){
          return ;
      }}
      if(yuv_){
-         yuv_->OnFrame(frame);
+    	 rtc::scoped_refptr<webrtc::I420BufferInterface> i420_buffer=
+    	 				 frame.video_frame_buffer()->ToI420();
+
+    	 yuv_->OnFrame(frame);
      }
 	 frames_.push_back(FrameTs(copy,now));
 	 que_len_++;
@@ -156,7 +161,8 @@ VideoDecoder::VideoDecoder(uint32_t h,uint32_t w){
     height_=h;
     width_=w;
     uint32_t len=width_*height_*3;
-    yuv_buf_.resize(len);
+//TODO, not quite safe when resolution changes!
+    yuv_buf_=new RefCountedObject<Buffer>(len);
     handler_=decoder_.X264Decoder_Init();
 }
 VideoDecoder::~VideoDecoder(){
@@ -194,7 +200,7 @@ void VideoDecoder::Run(){
             int h=0;
             int w=0;
             int ret=0;
-            ret=decoder_.X264Decoder_Decode(handler_,image.data(),image.size(),yuv_buf_.data()
+            ret=decoder_.X264Decoder_Decode(handler_,image.data(),image.size(),yuv_buf_->data()
 					,&decode_size,&w,&h);
             if(ret!=0){
                 std::cout<<"decode error"<<std::endl;
@@ -204,13 +210,22 @@ void VideoDecoder::Run(){
 		    std::cout<<"decode image "<<" "<<h<<" "<<w<<std::endl;
                     std::ofstream out;
                     out.open(name.c_str(),std::ofstream::binary);
-                    out.write((const char*)yuv_buf_.data(),yuv_buf_.size());
+                    out.write((const char*)yuv_buf_->data(),decode_size);
                     out.close();                    
                 }
                 record_id_++;
             }
+            if(sink_){
+            	sink_->OnFrameAfterDecode(decode_id_,w,h,yuv_buf_->data(),decode_size);
+            }
             decode_id_++; 
         }
+    }
+}
+void VideoDecoder::ResetHxW(uint32_t height,uint32_t width){
+    uint32_t len=height*width*3;
+    if(yuv_buf_->size()<len){
+    	yuv_buf_->SetSize(len);
     }
 }
 void VideoDecoder::OnEncodedImageCallBack(EncodeImage &image){

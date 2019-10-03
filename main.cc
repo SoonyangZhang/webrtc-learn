@@ -53,6 +53,7 @@ int main()
 	encoder.RegisterSink(&h264sink);
     encoder.RegisterYUVRecord(&yuv_record);
     VideoDecoder decoder(kTestHeight,kTestWidth);
+    decoder.RegisterDecodeFrameSink(&yuv_record);
     decoder.StartDecoder();
     encoder.RegisterSink(&decoder);
 
@@ -72,7 +73,8 @@ int main()
 	video_capture_.StopCapture();
 	encoder.StopEncoder();
     decoder.StopDecoder();
-    worker.Stop();
     sender.StopSender();
+    base_sleep(2000);
+    worker.Stop();
 	return 0;
 }

@@ -12,6 +12,7 @@
 #include "echo_h264_encoder.h"
 #include "H264Decoder.h"
 namespace zsy{
+class FrameToFile;
 struct FrameTs{
   FrameTs(webrtc::VideoFrame *f,uint32_t ts):frame(f),enqueTs(ts){}	
   webrtc::VideoFrame *frame;
@@ -60,27 +61,6 @@ public:
 	virtual ~EncodedVideoCallback(){}
 	virtual void OnEncodedImageCallBack(EncodeImage &image)=0;
 };
-class YUVBuffer{
-public:
-    YUVBuffer(){}
-	YUVBuffer(int size):size_(size){
-        if(size_){
-            data_.reset(new uint8_t[size_]);
-        }
-    }
-	void resize(int len){
-		if(len>size_){
-			data_.reset(new uint8_t[len]);
-			size_=len;
-		}
-	}
-    uint32_t size() const {return size_;}
-	uint8_t* data(){return (uint8_t*)(data_.get());}
-private:
-	int size_{0};
-	std::unique_ptr<uint8_t[]>data_;
-
-};
 class VideoEncoder :public MyThread,public rtc::VideoSinkInterface<webrtc::VideoFrame>{
 public:
 	VideoEncoder(int width,int height,int fps);
@@ -102,7 +82,7 @@ private:
 	std::list<FrameTs> frames_;
 	std::list<EncodedVideoCallback*> sinks_;
     rtc::VideoSinkInterface<webrtc::VideoFrame> *yuv_{nullptr};
-	YUVBuffer yuv_buf_;
+    scoped_refptr<RefCountedObject<Buffer>> yuv_buf_;
 	uint8_t image_buf_[1024000];
     int pic_id_{0};
 	int total_pid_{0};
@@ -118,11 +98,11 @@ public:
     void StartDecoder();
     void StopDecoder();
     void Run() override;
-    void ResetHxW(uint32_t height,uint32_t width){
-        uint32_t len=height*width*3/2;
-        yuv_buf_.resize(len);
-    }
+    void ResetHxW(uint32_t height,uint32_t width);
     void OnEncodedImageCallBack(EncodeImage &image) override;
+    void RegisterDecodeFrameSink(FrameToFile *sink){
+    	sink_=sink;
+    }
 private:
     uint32_t height_{0};
     uint32_t width_{0};
@@ -130,12 +110,13 @@ private:
     AtomicLock que_lock_;
     std::list<EncodeImage> images_;
     uint32_t que_len_{0};
-    YUVBuffer yuv_buf_;
+    scoped_refptr<RefCountedObject<Buffer>> yuv_buf_;
     H264Decoder decoder_;
 	X264_DECODER_H handler_;
     uint32_t image_count_{0};
     uint32_t max_record_{5};
     uint32_t record_id_{0};
-    uint32_t decode_id_{0};
+    uint32_t decode_id_{1};
+    FrameToFile *sink_{nullptr};
 };
 }

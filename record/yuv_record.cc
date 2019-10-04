@@ -16,7 +16,7 @@ FrameBuffer::FrameBuffer(int w,int h,const uint8_t*data,size_t size){
 	}
 }
 FrameToFile::FrameToFile(TaskQueue *worker,uint32_t max)
-:worker_(worker),max_record_(max){
+:worker_(worker),max_frames_to_disk_(max){
 	std::string name("qoe_info.txt");
 	qoe_info_.open(name.c_str(), std::fstream::out);
 }
@@ -26,21 +26,13 @@ FrameToFile::~FrameToFile(){
 	qoe_info_.close();
 }
 void FrameToFile::OnFrame(const webrtc::VideoFrame& frame){
-	/*int f_w=frame.width();
-	int f_h=frame.height();
-    	int ms=frame.timestamp_us()/1000;
-	WritePicInfo(f_w,f_h,ms);*/
-	if(pic_id_<=max_record_){
+	if(incoming_frame_<max_frames_to_disk_){
 		webrtc::VideoFrame copy=frame;
 		LockScope crit(&que_lock_);
 		frames_.push_back(copy);
-		pic_id_++;
-		if(worker_){
-            worker_->PostTask([this](){
-                this->MayWriteFrameToDisk();
-            });
-        }
+		incoming_frame_++;
 	}
+	TriggerFrameToDiskTask();
 	OnFrameBeforeEncode(frame);
 }
 void FrameToFile::OnFrameBeforeEncode(const webrtc::VideoFrame& frame){
@@ -66,12 +58,8 @@ void FrameToFile::OnFrameAfterDecode(uint32_t frame_id,int w,int h,const uint8_t
 		FrameBuffer buffer(w,h,data,size);
 		decode_frames_.insert(std::make_pair(QoEDecodeFrames_,buffer));
 		QoEDecodeFrames_++;
-		if(worker_){
-            worker_->PostTask([this](){
-                this->CalculateQoE();
-            });
 	}
-}
+	TriggerQoETask();
 }
 void FrameToFile::EraseFrameBefore(uint32_t id){
 	LockScope crit(&frame_lock_);
@@ -92,9 +80,6 @@ void FrameToFile::EraseFrameBefore(uint32_t id){
 		}
 	}
 }
-void FrameToFile::MayWriteFrameToDisk(){
-    WriteFrameToFile();
-}
 void FrameToFile::CalculateQoE(){
 	uint32_t frame_id=0;
 	{
@@ -112,12 +97,47 @@ void FrameToFile::CalculateQoE(){
 				int inc=1,Y=h*w*3/2;
 				double psnr=::calculate_psnr(encode_frame.data(),decode_frame.data(),inc,Y);
 				WriteQoEInfo(frame_id,ssim,psnr);
+				qoe_calculate_++;
+				if(qoe_calculate_>=QoEMaxFrames_){
+					qoe_task_done_=true;
+				}
 			}
 		}
-
 	}
 	if(frame_id>0){
 		EraseFrameBefore(frame_id);
+	}
+}
+void FrameToFile::TriggerFrameToDiskTask(){
+	if(!frame_task_triggered_){
+		FrameToDiskTask();
+		frame_task_triggered_=true;
+	}
+}
+void FrameToFile::TriggerQoETask(){
+	if(!qoe_task_triggered_){
+		QoETask();
+		qoe_task_triggered_=true;
+	}
+}
+void FrameToFile::FrameToDiskTask(){
+		if(worker_){
+			WriteFrameToFile();
+			if(!frames_written_done_){
+		        worker_->PostTask([this](){
+		            this->FrameToDiskTask();
+		        });
+			}
+	    }
+}
+void FrameToFile::QoETask(){
+	if(worker_){
+	CalculateQoE();
+	if(!qoe_task_done_){
+		worker_->PostTask([this](){
+		     this->QoETask();
+		});
+			}
 	}
 }
 void FrameToFile::WriteFrameToFile(){
@@ -154,12 +174,15 @@ void FrameToFile::WriteFrameToFile(){
 void FrameToFile::WriteFrameToFile(const uint8_t *data,size_t size,int w,int h){
 	std::string name=std::to_string(w)+"X"+
 			std::to_string(h)+"_"+
-			std::to_string(frame_to_disk_)+".yuv";
-	frame_to_disk_++;
+			std::to_string(frames_written_)+".yuv";
+	frames_written_++;
 	std::ofstream out;
 	out.open(name.c_str(),std::ofstream::binary);
 	out.write((const char*)(data),size);
 	out.close();
+	if(frames_written_>=max_frames_to_disk_){
+		frames_written_done_=true;
+	}
 }
 void FrameToFile::WritePicInfo(int w,int h,int ms){
 	if(pic_info_){

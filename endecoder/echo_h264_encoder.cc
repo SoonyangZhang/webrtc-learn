@@ -200,13 +200,15 @@ void H264Encoder::config_param()
 	en_param_.rc.i_qp_step = 2;
 
 	en_param_.i_log_level = X264_LOG_NONE;
-	en_param_.rc.i_rc_method = X264_RC_CRF;
-
+	//en_param_.rc.i_rc_method = X264_RC_CRF;
+    //https://blog.csdn.net/table/article/details/8085115
+    en_param_.rc.i_rc_method=X264_RC_ABR;
 	/*en_param_.rc.i_qp_min = 5;
 	en_param_.rc.i_qp_max = 40;
 	en_param_.rc.i_qp_constant = 24;*/
-	en_param_.rc.i_bitrate = 1500;//res.min_rate;
-	en_param_.rc.i_vbv_max_bitrate = (res.min_rate+ res.max_rate) / 2;
+    uint32_t bitrte=1500;
+	en_param_.rc.i_bitrate = bitrte;//res.min_rate;
+	en_param_.rc.i_vbv_max_bitrate =bitrte*3/2;
 	en_param_.i_bframe = 0;
 
 	 

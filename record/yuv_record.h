@@ -39,8 +39,11 @@ public:
 	void OnFrameBeforeEncode(const webrtc::VideoFrame& frame);
 	void OnFrameBeforeEncode(int w,int h,const uint8_t *data,size_t size);
     void OnFrameAfterDecode(uint32_t frame_id,int w,int h,const uint8_t *data,size_t size);
-	void MayWriteFrameToDisk();
 	void CalculateQoE();
+	void TriggerFrameToDiskTask();
+	void TriggerQoETask();
+	void FrameToDiskTask();
+	void QoETask();
 private:
 	void WriteFrameToFile();
 	void WriteFrameToFile(const uint8_t *data,size_t size,int w,int h);
@@ -48,9 +51,10 @@ private:
 	void WritePicInfo(int w,int h,int ms);
 	void WriteQoEInfo(uint32_t frame_id,double ssim,double psnr);
     TaskQueue *worker_{nullptr};
-	uint32_t pic_id_{0};
-	uint32_t frame_to_disk_{0};
-	uint32_t max_record_{1};
+	uint32_t incoming_frame_{0};
+	uint32_t frames_written_{0};
+	bool frames_written_done_{false};
+	uint32_t max_frames_to_disk_{1};
     std::fstream info_;
     std::fstream qoe_info_;
 	bool pic_info_{true};
@@ -63,6 +67,10 @@ private:
     //uint32_t deocde_frame_id_{1};
     uint32_t QoEEncodeFrames_{1};
     uint32_t QoEDecodeFrames_{1};
-    uint32_t QoEMaxFrames_{100};
+    uint32_t QoEMaxFrames_{600};
+    uint32_t qoe_calculate_{0};
+    bool qoe_task_done_{false};
+    bool frame_task_triggered_{false};
+    bool qoe_task_triggered_{false};
 };
 }

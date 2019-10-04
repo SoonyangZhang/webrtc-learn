@@ -14,7 +14,8 @@ public:
 	H264Record(TaskQueue *worker,std::string &s);
 	~H264Record();
 	void OnEncodedImageCallBack(EncodeImage &image) override;
-	void MayWriteImageToDisk();
+	void TriggerImageWriteTask();
+	void WriteImageToDiskTask();
 private:
 	void WriteImageToDisk();
 	TaskQueue *worker_;
@@ -24,5 +25,10 @@ private:
     uint32_t first_capture_ts_{0};
 	AtomicLock que_lock_;
 	std::list<EncodeImage> images_;
+	bool task_triggered_{false};
+	bool task_done_{false};
+	uint32_t max_record_{100};
+	uint32_t income_frames_{0};
+	uint32_t written_frames_{0};
 };
 }

@@ -15,16 +15,28 @@ H264Record::~H264Record(){
 }
 void H264Record::OnEncodedImageCallBack(EncodeImage &image)
 {
-	LockScope crit(&que_lock_);
-	images_.push_back(image);
-	if(worker_){
-		worker_->PostTask([this](){
-			this->MayWriteImageToDisk();
-		});
+	if(income_frames_<max_record_){
+		LockScope crit(&que_lock_);
+		images_.push_back(image);
+		income_frames_++;
+	}
+	TriggerImageWriteTask();
+}
+void H264Record::TriggerImageWriteTask(){
+	if(!task_triggered_){
+		task_triggered_=true;
+		WriteImageToDiskTask();
 	}
 }
-void H264Record::MayWriteImageToDisk(){
-	WriteImageToDisk();
+void H264Record::WriteImageToDiskTask(){
+	if(worker_){
+		WriteImageToDisk();
+		if(!task_done_){
+			worker_->PostTask([this](){
+				this->WriteImageToDiskTask();
+			});
+		}
+	}
 }
 void H264Record::WriteImageToDisk(){
 	
@@ -35,6 +47,10 @@ void H264Record::WriteImageToDisk(){
 		assert(image.size());
         uint32_t len=image.size();
 		f_out_.write((const char*)image.data(),len);
+		written_frames_++;
+		if(written_frames_>=max_record_){
+			task_done_=true;
+		}
         if(first_encode_ts_==-1){
             first_encode_ts_=image.EncodeTs();
             first_capture_ts_=image.CaptureTs();

@@ -33,6 +33,7 @@ public:
                 it++;
             }
         }
+        return success;
     }
 	void OnFrame(const webrtc::VideoFrame& videoFrame) override {
 	    int height = videoFrame.height();

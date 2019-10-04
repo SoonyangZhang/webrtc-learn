@@ -64,27 +64,29 @@ void VideoEncoder::StopEncoder(){
 }
 void VideoEncoder::Run(){
 	while(running_){
-		webrtc::VideoFrame*f=nullptr;
+		bool has_frame=false;
 		uint32_t enque_ts=0;
+		uint32_t capture_ts=0;
+		int size=0;
 		if(que_len_>0)
 		{
 			LockScope ls(&lock_);
 			if(!frames_.empty()){
 				FrameTs temp=frames_.front();
-				f=temp.frame;
-				temp.frame=nullptr;
+				has_frame=true;
+				int width=temp.frame.width();
+				int height=temp.frame.height();
+				size = width*height * 3 / 2;
+				yuv_buf_->SetSize(size);
+				webrtc::ConvertFromI420(temp.frame, webrtc::kI420, 0, yuv_buf_->data());
+				capture_ts=temp.frame.timestamp_us()/1000;
 				enque_ts=temp.enqueTs;
 				frames_.pop_front();
 				que_len_--;
+
 			}
 		}
-		if(f){
-			int width=f->width();
-			int height=f->height();
-			int size = width*height * 3 / 2;
-			yuv_buf_->SetSize(size);
-			
-			webrtc::ConvertFromI420(*f, webrtc::kI420, 0, yuv_buf_->data());
+		if(has_frame){
 			int out_size=0;
 			int ft=0;
 			uint32_t last=GetMilliSeconds();
@@ -93,7 +95,6 @@ void VideoEncoder::Run(){
 					,AV_PIX_FMT_YUV420P,image_buf_,
 					&out_size,&ft,false);
 			uint32_t now=GetMilliSeconds();
-			uint32_t capture_ts=f->timestamp_us()/1000;
 			uint32_t queue=last-enque_ts;
 			pic_id_++;
 			std::cout<<total_pid_<<" "<<pic_id_<<" "<<out_size<<" "<<
@@ -109,8 +110,6 @@ void VideoEncoder::Run(){
             }else{
                 std::cout<<"encode failed"<<std::endl;
             }
-
-			delete f;
 		}
 	}
 }
@@ -120,23 +119,30 @@ void VideoEncoder::OnFrame(const webrtc::VideoFrame& frame){
      // the two time stamp  values are same
      //uint32_t capture_ts=frame.timestamp_us()/1000;
      //std::cout<<frame.render_time_ms()<<" "<<capture_ts<<std::endl;
-	 webrtc::VideoFrame *copy=new webrtc::VideoFrame(frame);
-	 uint32_t now=GetMilliSeconds();
-	 LockScope ls(&lock_);
-     if(!frames_.empty()){
-     FrameTs temp=frames_.front();
-     uint32_t queue_delay=now-temp.enqueTs;
-     if(queue_delay>max_que_delay_){
-         return ;
-     }}
-     if(yuv_){
+
+	 //TODO  this should be deleted, and drop frame based on queue delay.
+	 //to get qoe, the encode delay is not considered here.
+	 //if(total_pid_>max_frame_for_encode_){
+	//	 return;
+	 //}
+	 {
+		 uint32_t now=GetMilliSeconds();
+		 LockScope ls(&lock_);
+	     if(!frames_.empty()){
+	     FrameTs temp=frames_.front();
+	     uint32_t queue_delay=now-temp.enqueTs;
+	     if(queue_delay>max_que_delay_){
+	         return ;
+	     }}
+		 frames_.push_back(FrameTs(frame,now));
+		 que_len_++;
+	 }
+	 if(yuv_){
     	 rtc::scoped_refptr<webrtc::I420BufferInterface> i420_buffer=
     	 				 frame.video_frame_buffer()->ToI420();
 
     	 yuv_->OnFrame(frame);
      }
-	 frames_.push_back(FrameTs(copy,now));
-	 que_len_++;
 }
 bool VideoEncoder::RegisterSink(EncodedVideoCallback *cb){
     bool success=false;

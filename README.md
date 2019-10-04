@@ -60,5 +60,27 @@ https://www.jianshu.com/p/f4f3b0764cec
 x264  preset
 https://blog.csdn.net/NB_vol_1/article/details/78363559  
 
+I found that, The operation to refer frame instead of copy can reduce frame queue delay and reduce frame dropping.  
+```
+//videocodec.h  
+//old version
+struct FrameTs{
+  FrameTs(webrtc::VideoFrame *f,uint32_t ts):frame(f),enqueTs(ts){}	
+  webrtc::VideoFrame *frame;
+  uint32_t enqueTs;
+};
+//videocodec.cc   
+webrtc::VideoFrame *copy=new webrtc::VideoFrame(frame);  
+f=temp.frame;  
+//improve version  
+struct FrameTs{  
+  FrameTs(const webrtc::VideoFrame &f,uint32_t ts):frame(f),enqueTs(ts){}  
+  FrameTs(const FrameTs&)=default;  //for deque front  
+  webrtc::VideoFrame frame;  
+  uint32_t enqueTs;  
+};
+
+```
+
 
 

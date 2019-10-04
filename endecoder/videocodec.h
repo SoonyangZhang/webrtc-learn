@@ -14,8 +14,9 @@
 namespace zsy{
 class FrameToFile;
 struct FrameTs{
-  FrameTs(webrtc::VideoFrame *f,uint32_t ts):frame(f),enqueTs(ts){}	
-  webrtc::VideoFrame *frame;
+  FrameTs(const webrtc::VideoFrame &f,uint32_t ts):frame(f),enqueTs(ts){}
+  FrameTs(const FrameTs&)=default;
+  webrtc::VideoFrame frame;
   uint32_t enqueTs;
 };
 class EncodeImage{
@@ -90,6 +91,7 @@ private:
 	int que_len_{0};
     int max_que_{4};
     int max_que_delay_{100};
+    int max_frame_for_encode_{1000};
 };
 class VideoDecoder:public MyThread,public EncodedVideoCallback{
 public:

@@ -48,7 +48,6 @@ set(psnr_LIB
 tools/psnr.c
 )
 add_library(psnr STATIC ${psnr_LIB})
-
 set(bmp2jp_LIB
 bmp2jpeg/bmp.cc
 bmp2jpeg/dct.cc
@@ -65,6 +64,7 @@ base/callback.cc
 base/copy_on_write_buffer.cc
 base/my_thread.cc
 base/task_queue.cc
+base/split.cc
 )
 add_library(base STATIC ${base_LIB})
 
@@ -85,7 +85,7 @@ add_executable(${EXECUTABLE_NAME} main.cc)
 target_link_libraries(${EXECUTABLE_NAME} nonrtp  h264endecoder  zsy base  psnr webrtc_full  x264 avcodec avutil swscale   pthread dl m)
 set(EXECUTABLE_NAME "fun_test")
 add_executable(${EXECUTABLE_NAME} fun_test.cc )
-target_link_libraries(${EXECUTABLE_NAME} zsy base  psnr webrtc_full pthread)
+target_link_libraries(${EXECUTABLE_NAME} zsy base h264endecoder psnr webrtc_full x264 avcodec avutil swscale pthread dl m)
 
 set(EXECUTABLE_NAME "yuv2bmp")
 add_executable(${EXECUTABLE_NAME} yuv2bmp.cc )
@@ -119,3 +119,7 @@ target_link_libraries(${EXECUTABLE_NAME} base nonrtp)
 set(EXECUTABLE_NAME "t_parser")
 add_executable(${EXECUTABLE_NAME} ${CMAKE_SOURCE_DIR}/h264parser/parser_test.cc)
 target_link_libraries(${EXECUTABLE_NAME} base nonrtp)
+
+set(EXECUTABLE_NAME "t_dropper")
+add_executable(${EXECUTABLE_NAME} ${CMAKE_SOURCE_DIR}/tools/dropper.cc)
+target_link_libraries(${EXECUTABLE_NAME} base nonrtp h264endecoder  x264 avcodec avutil swscale pthread dl m)

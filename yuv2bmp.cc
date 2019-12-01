@@ -6,18 +6,18 @@ https://blog.csdn.net/ctfysj/article/details/81299473
 #include <iostream>
 #include <string.h>
 #include <unistd.h>
-#define WIDTH 1280
-#define HEIGHT 720
-//转换矩阵
+#include "cmdline.h"
+#include <string>
+using namespace std;
 double YuvToRgb[3][3] = {1,       0,  1.4022,
                          1,    -0.3456, -0.7145,
                          1,   1.771,       0};
 
 //根据RGB三分量写BMP，不必关注
-int WriteBmp(int width, int height, unsigned char *R,unsigned char *G,unsigned char *B, char *BmpFileName);
+int WriteBmp(int width, int height, unsigned char *R,unsigned char *G,unsigned char *B, const char *BmpFileName);
 
 //转换函数
-int Convert(char *file, char *bmp_out,int width, int height)
+int Convert(const char *file, const char *bmp_out,int width, int height)
 {
     //变量声明
     int i = 0;
@@ -101,40 +101,24 @@ void set_bmp_name(char *in,char *dst,int len){
     memcpy(dst,format,tmp_len);
     return;
 }
+//./yuv2bmp -i drop_4.yuv -o xx.bmp 
 int main(int argc, char* argv[])
 {
-    int i=1;
-    int w=WIDTH;
-    int h=HEIGHT;
-    char yuv_in[128]="0_decode.yuv";
-    char bmp_out[128]="test_0_decode.bmp";
-    int opt = 0;;
-    while ((opt = getopt(argc, argv, "i:w::h::")) != -1){
-        switch (opt){
-            case 'i':{
-                memset(yuv_in,0,sizeof(yuv_in));
-                memcpy(yuv_in,optarg,strlen(optarg));
-                set_bmp_name(yuv_in,bmp_out,sizeof(bmp_out));
-                break;
-            }
-            case 'w':{
-                w=atoi(optarg);
-                break;
-            }
-            case 'h':{
-                h=atoi(optarg);
-                break;
-            }
-            default:
-                break;
-        }
-    }
-    //printf("%s,%s\n",yuv_in,bmp_out);
-    Convert(yuv_in,bmp_out,w, h);
+    cmdline::parser a;
+    a.add<int>("width", 'w', "frame width", false,1280, cmdline::range(1, 65535));
+    a.add<int>("height", 'h', "frame height", false,720, cmdline::range(1, 65535));
+    a.add<string>("input", 'i', "input", false, "xx.yuv");
+    a.add<string>("output", 'o', "output", false, "yy.bmp");
+    a.parse_check(argc, argv);
+    int w=a.get<int>("width");
+    int h=a.get<int>("height");
+    std::string yuv_in=a.get<string>("input");
+    std::string bmp_out=a.get<string>("output");
+    Convert(yuv_in.c_str(),bmp_out.c_str(),w, h);
     return 0;
 }
 
-int WriteBmp(int width, int height, unsigned char *R,unsigned char *G,unsigned char *B, char *BmpFileName)
+int WriteBmp(int width, int height, unsigned char *R,unsigned char *G,unsigned char *B, const char *BmpFileName)
 {
     int x=0;
     int y=0;
